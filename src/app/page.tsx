@@ -1,65 +1,172 @@
-import Image from "next/image";
+'use client';
+
+import Link from 'next/link';
+import { Search, Shield, Clock, Star, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import type { LawyerProfile } from '@/types';
+import { LawyerCard } from '@/components/lawyer/LawyerCard';
 
 export default function Home() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [featuredLawyers, setFeaturedLawyers] = useState<LawyerProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFeatured = async () => {
+      try {
+        const result = await api.searchLawyers({ limit: 6, minRating: 4 });
+        setFeaturedLawyers(result.data);
+      } catch (error) {
+        console.error('Failed to load featured lawyers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadFeatured();
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/lawyers?search=${encodeURIComponent(searchQuery)}`);
+    } else {
+      router.push('/lawyers');
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="bg-transparent text-[var(--text-primary)]">
+      {/* Hero Section */}
+      <section className="brand-gradient">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center space-y-6">
+            <p className="inline-flex items-center gap-2 text-sm tracking-[0.3em] uppercase text-[#f3e2c1]/70">
+              Trusted Legal Network
+            </p>
+            <h1 className="text-4xl md:text-6xl font-semibold leading-tight text-[var(--text-primary)]">
+              Find your legal expert with{" "}
+              <span className="text-[#d5b47f]">confidence</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-[#f3e2c1]/85">
+              Connect with qualified lawyers and book appointments effortlessly
+            </p>
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/50" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by specialization, city, or lawyer name..."
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-8 py-4 rounded-2xl font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/30 transition-all flex items-center justify-center"
+                >
+                  Search
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-[#050c26] border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Choose Lawvera?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="brand-card p-8 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
+                <Search className="h-8 w-8 text-[#d5b47f]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Easy Search</h3>
+              <p className="text-[var(--text-secondary)]">
+                Find lawyers by specialization, location, experience, and ratings
+              </p>
+            </div>
+            <div className="brand-card p-8 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
+                <Clock className="h-8 w-8 text-[#46d3a1]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Instant Booking</h3>
+              <p className="text-[var(--text-secondary)]">
+                Book appointments online with real-time availability
+              </p>
+            </div>
+            <div className="brand-card p-8 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
+                <Shield className="h-8 w-8 text-[#f3c969]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Verified Lawyers</h3>
+              <p className="text-[var(--text-secondary)]">
+                All lawyers are verified and reviewed by clients
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Lawyers */}
+      <section className="py-16 bg-[#040a23]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold">Featured Lawyers</h2>
+            <Link
+              href="/lawyers"
+              className="text-[#d5b47f] font-medium flex items-center hover:text-[#f3e2c1]"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              View All
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white/5 animate-pulse rounded-lg h-48 border border-white/10"
+                />
+              ))}
+            </div>
+          ) : featuredLawyers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredLawyers.map((lawyer) => (
+                <LawyerCard key={lawyer._id} lawyer={lawyer} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-[var(--text-muted)] py-8">
+              No featured lawyers available at the moment
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-to-r from-[#d5b47f] via-[#c4945e] to-[#a56d3f] text-[#1b1205]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+          <h2 className="text-3xl font-bold">Are you a lawyer?</h2>
+          <p className="text-xl text-[#2d1604]/80">
+            Join Lawvera and grow your practice
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/auth/register?type=lawyer"
+            className="inline-block px-8 py-4 rounded-2xl font-semibold bg-[#080f2b] text-[#d5b47f] border border-[#d5b47f]/40 hover:bg-[#0b1634] transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Register as Lawyer
+          </Link>
         </div>
-      </main>
+      </section>
     </div>
   );
 }
