@@ -62,7 +62,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050c26] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         
         <h2 className="mt-6 text-3xl font-extrabold">Create your account</h2>
@@ -83,7 +83,7 @@ export default function RegisterPage() {
             <Link
               href="/auth/register"
               className={`flex-1 text-center py-2 rounded-lg border ${type !== 'lawyer'
-                  ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#050c26] border-transparent'
+                  ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1f1508] border-transparent'
                   : 'bg-white/5 text-[var(--text-secondary)] border-white/10'
                 }`}
             >
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                 <input
                   {...register('name', { required: 'Name is required' })}
                   type="text"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                   })}
                   type="email"
                   autoComplete="email"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
@@ -168,7 +168,7 @@ export default function RegisterPage() {
                   })}
                   type="password"
                   autoComplete="new-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                   })}
                   type="password"
                   autoComplete="new-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                 <input
                   {...register('city')}
                   type="text"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function RegisterPage() {
                 <input
                   {...register('phone')}
                   type="tel"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
               </div>
             </div>

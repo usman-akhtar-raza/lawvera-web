@@ -43,26 +43,26 @@ export default function Home() {
       <section className="brand-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center space-y-6">
-            <p className="inline-flex items-center gap-2 text-sm tracking-[0.3em] uppercase text-[#f3e2c1]/70">
+            <p className="inline-flex items-center gap-2 text-sm tracking-[0.3em] uppercase text-[#b98958]">
               Trusted Legal Network
             </p>
             <h1 className="text-4xl md:text-6xl font-semibold leading-tight text-[var(--text-primary)]">
               Find your legal expert with{" "}
               <span className="text-[#d5b47f]">confidence</span>
             </h1>
-            <p className="text-xl md:text-2xl text-[#f3e2c1]/85">
+            <p className="text-xl md:text-2xl text-[var(--text-secondary)]">
               Connect with qualified lawyers and book appointments effortlessly
             </p>
             <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/50" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by specialization, city, or lawyer name..."
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-white/60 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-lg shadow-black/5 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                   />
                 </div>
                 <button
@@ -79,7 +79,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-[#050c26] border-y border-white/5">
+      <section className="py-16 bg-[var(--background-muted)] border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">
             Why Choose Lawvera?
@@ -117,7 +117,7 @@ export default function Home() {
       </section>
 
       {/* Featured Lawyers */}
-      <section className="py-16 bg-[#040a23]">
+      <section className="py-16 bg-[var(--surface-muted)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold">Featured Lawyers</h2>
@@ -161,7 +161,7 @@ export default function Home() {
           </p>
           <Link
             href="/auth/register?type=lawyer"
-            className="inline-block px-8 py-4 rounded-2xl font-semibold bg-[#080f2b] text-[#d5b47f] border border-[#d5b47f]/40 hover:bg-[#0b1634] transition-all"
+            className="inline-block px-8 py-4 rounded-2xl font-semibold bg-[var(--text-primary)] text-[#f7e4c5] border border-[#d5b47f]/40 transition-all hover:bg-[#3a240e]"
           >
             Register as Lawyer
           </Link>

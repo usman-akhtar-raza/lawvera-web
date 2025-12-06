@@ -3,7 +3,7 @@ import { Briefcase } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-[#04081d] border-t border-white/10 text-[var(--text-secondary)]">
+    <footer className="bg-[var(--surface)] border-t border-white/10 text-[var(--text-secondary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>

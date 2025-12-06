@@ -42,7 +42,7 @@ export default function LawyerDashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-[#050c26] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d5b47f]"></div>
       </div>
     );
@@ -58,7 +58,7 @@ export default function LawyerDashboard() {
   const upcoming = dashboard?.upcoming || [];
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -68,7 +68,7 @@ export default function LawyerDashboard() {
             </p>
           </div>
           <button
-            onClick={() => router.push('/dashboard/lawyer/settings')}
+            onClick={() => router.push('/profile')}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] font-semibold hover:shadow-lg hover:shadow-[#d5b47f]/30 flex items-center"
           >
             <Settings className="h-5 w-5 mr-2" />
@@ -77,8 +77,8 @@ export default function LawyerDashboard() {
         </div>
 
         {profile?.status === 'pending' && (
-          <div className="bg-[#3a2c19] border border-[#f3c969]/30 rounded-lg p-4 mb-6">
-            <p className="text-[#f3c969]">
+          <div className="rounded-lg border border-[#f3c969]/30 bg-[#f9f0e2] p-4 mb-6">
+            <p className="text-[#8a5f2c]">
               Your profile is pending approval. You'll be able to receive
               bookings once approved.
             </p>
@@ -155,7 +155,7 @@ export default function LawyerDashboard() {
                           onClick={() =>
                             handleStatusUpdate(booking._id, BookingStatus.CONFIRMED)
                           }
-                          className="px-4 py-2 rounded-lg bg-[#1f3d36] text-[#46d3a1] border border-[#46d3a1]/30 hover:bg-[#274b43] flex items-center transition-colors"
+                          className="px-4 py-2 rounded-lg bg-[#e2f4ed] text-[#1f3d36] border border-[#46d3a1]/40 hover:bg-[#d4ede3] flex items-center transition-colors"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Approve
@@ -164,7 +164,7 @@ export default function LawyerDashboard() {
                           onClick={() =>
                             handleStatusUpdate(booking._id, BookingStatus.CANCELLED)
                           }
-                          className="px-4 py-2 rounded-lg bg-[#3f1d2a] text-[#ff8c8c] border border-[#ff8c8c]/30 hover:bg-[#552534] flex items-center transition-colors"
+                          className="px-4 py-2 rounded-lg bg-[#fde8ed] text-[#a23a4c] border border-[#ff8c8c]/40 hover:bg-[#fad6df] flex items-center transition-colors"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject

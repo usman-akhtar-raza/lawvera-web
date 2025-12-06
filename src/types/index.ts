@@ -83,6 +83,14 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface ChatSessionSummary {
+  sessionId: string;
+  title: string;
+  lastMessagePreview: string;
+  updatedAt: string;
+  messageCount?: number;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;

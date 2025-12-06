@@ -81,15 +81,15 @@ export function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#050c26] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/50">
-        <div className="sticky top-0 bg-[#050c26] border-b border-white/10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--surface)] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-[#d5b47f]/20">
+        <div className="sticky top-0 bg-[var(--surface)] border-b border-white/10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-2xl font-bold text-[var(--text-primary)]">
             Book Appointment
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-full transition-colors text-[var(--text-secondary)]"
+            className="p-2 hover:bg-[var(--brand-accent-soft)] rounded-full transition-colors text-[var(--text-secondary)]"
           >
             <X className="h-5 w-5" />
           </button>
@@ -125,8 +125,8 @@ export function BookingModal({
                       isSelected
                         ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
                         : hasSlots && !isPast
-                          ? 'border-white/10 text-[var(--text-primary)] hover:border-[#d5b47f]/40 bg-white/5'
-                          : 'border-white/5 bg-white/5 text-[var(--text-muted)] cursor-not-allowed'
+                          ? 'border-white/10 bg-white text-[var(--text-primary)] hover:border-[#d5b47f]/40'
+                          : 'border-white/10 bg-[var(--surface-muted)] text-[var(--text-muted)] cursor-not-allowed'
                     }`}
                   >
                     <div className="font-medium">{format(date, 'd')}</div>
@@ -151,7 +151,7 @@ export function BookingModal({
                     className={`p-3 rounded-lg border text-sm transition-colors ${
                       selectedTime === slot
                         ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
-                        : 'border-white/10 text-[var(--text-primary)] hover:border-[#d5b47f]/40 bg-white/5'
+                        : 'border-white/10 bg-white text-[var(--text-primary)] hover:border-[#d5b47f]/40'
                     }`}
                   >
                     {slot}
@@ -174,7 +174,7 @@ export function BookingModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+              className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
               placeholder="Briefly describe your legal needs..."
             />
           </div>
@@ -183,7 +183,7 @@ export function BookingModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[var(--text-secondary)] border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+              className="px-4 py-2 text-[var(--text-secondary)] border border-white/10 rounded-lg hover:bg-[var(--brand-accent-soft)] transition-colors"
             >
               Cancel
             </button>

@@ -61,7 +61,7 @@ export default function LawyersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-8">
+    <div className="min-h-screen bg-[var(--background-muted)] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-[var(--text-primary)]">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Find a Lawyer</h1>
@@ -110,7 +110,7 @@ export default function LawyersPage() {
                   onChange={(e) =>
                     handleFilterChange('specialization', e.target.value || undefined)
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 >
                   <option value="">All</option>
                   {specializations.map((spec) => (
@@ -131,7 +131,7 @@ export default function LawyersPage() {
                     handleFilterChange('city', e.target.value || undefined)
                   }
                   placeholder="Enter city"
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 />
               </div>
               <div>
@@ -148,7 +148,7 @@ export default function LawyersPage() {
                     )
                   }
                   placeholder="Min"
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 />
               </div>
               <div>
@@ -165,7 +165,7 @@ export default function LawyersPage() {
                     )
                   }
                   placeholder="Max"
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 />
               </div>
               <div>
@@ -182,7 +182,7 @@ export default function LawyersPage() {
                     )
                   }
                   placeholder="Years"
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 />
               </div>
               <div>
@@ -202,7 +202,7 @@ export default function LawyersPage() {
                     )
                   }
                   placeholder="Rating"
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 />
               </div>
               <div>
@@ -217,7 +217,7 @@ export default function LawyersPage() {
                       e.target.value || undefined,
                     )
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 >
                   <option value="">Any</option>
                   <option value="today">Today</option>

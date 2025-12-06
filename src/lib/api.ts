@@ -6,6 +6,7 @@ import type {
   Booking,
   PaginatedResponse,
   ChatMessage,
+  ChatSessionSummary,
   SearchLawyersParams,
 } from '@/types';
 
@@ -214,8 +215,20 @@ class ApiClient {
     return response.data;
   }
 
+  async getChatSessions(): Promise<ChatSessionSummary[]> {
+    const response = await this.client.get('/chat/sessions');
+    return response.data;
+  }
+
   async getChatHistory(sessionId: string): Promise<ChatMessage[]> {
-    const response = await this.client.get(`/chat/history/${sessionId}`);
+    const response = await this.client.get(`/chat/sessions/${sessionId}`);
+    return response.data;
+  }
+
+  async deleteChatSession(
+    sessionId: string,
+  ): Promise<{ sessionId: string; deleted: number }> {
+    const response = await this.client.delete(`/chat/sessions/${sessionId}`);
     return response.data;
   }
 

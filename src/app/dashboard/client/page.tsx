@@ -41,7 +41,7 @@ export default function ClientDashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-[#050c26] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d5b47f]"></div>
       </div>
     );
@@ -66,7 +66,7 @@ export default function ClientDashboard() {
   ) || [];
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome, {user?.name}</h1>
@@ -138,7 +138,7 @@ export default function ClientDashboard() {
                       </div>
                       <button
                         onClick={() => handleCancel(booking._id)}
-                        className="px-4 py-2 rounded-lg text-[#ff8c8c] border border-[#ff8c8c]/40 hover:bg-[#3f1d2a] transition-colors"
+                        className="px-4 py-2 rounded-lg text-[#a23a4c] border border-[#ff8c8c]/40 hover:bg-[#fde8ed] transition-colors"
                       >
                         Cancel
                       </button>
@@ -182,7 +182,7 @@ export default function ClientDashboard() {
                       </div>
                       <button
                         onClick={() => handleCancel(booking._id)}
-                        className="px-4 py-2 rounded-lg text-[#ff8c8c] border border-[#ff8c8c]/40 hover:bg-[#3f1d2a] transition-colors"
+                        className="px-4 py-2 rounded-lg text-[#a23a4c] border border-[#ff8c8c]/40 hover:bg-[#fde8ed] transition-colors"
                       >
                         Cancel
                       </button>
@@ -222,7 +222,7 @@ export default function ClientDashboard() {
                       <span
                         className={`inline-block mt-2 px-3 py-1 rounded-full text-sm ${
                           booking.status === BookingStatus.COMPLETED
-                            ? 'bg-[#1f3d36] text-[#46d3a1]'
+                            ? 'bg-[#e2f4ed] text-[#1f3d36]'
                             : 'bg-white/10 text-[var(--text-secondary)]'
                         }`}
                       >

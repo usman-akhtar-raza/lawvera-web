@@ -53,7 +53,7 @@ export default function LawyerDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#050c26] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="text-center text-[var(--text-secondary)]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d5b47f] mx-auto"></div>
           <p className="mt-4">Loading lawyer profile...</p>
@@ -64,7 +64,7 @@ export default function LawyerDetailPage() {
 
   if (!lawyer) {
     return (
-      <div className="min-h-screen bg-[#050c26] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="text-center text-[var(--text-secondary)]">
           <p className="text-lg">Lawyer not found</p>
         </div>
@@ -76,7 +76,7 @@ export default function LawyerDetailPage() {
   const reviews = lawyer.reviews || [];
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-8">
+    <div className="min-h-screen bg-[var(--background-muted)] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="brand-card brand-card--muted overflow-hidden">
           <div className="md:flex">
@@ -277,7 +277,7 @@ export default function LawyerDetailPage() {
                         value={reviewComment}
                         onChange={(e) => setReviewComment(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                        className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                         placeholder="Share your experience..."
                       />
                     </div>

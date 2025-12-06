@@ -43,7 +43,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050c26] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center">
           <Briefcase className="h-12 w-12 text-[#d5b47f]" />
@@ -81,7 +81,7 @@ export default function LoginPage() {
                   })}
                   type="email"
                   autoComplete="email"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
@@ -109,7 +109,7 @@ export default function LoginPage() {
                   })}
                   type="password"
                   autoComplete="current-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">

@@ -87,7 +87,7 @@ export default function LawyerRegisterPage() {
 
   const password = watch('password');
   const inputClass =
-    'mt-1 block w-full px-3 py-2 rounded-lg bg-[#0d1735] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]';
+    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]';
   const labelClass = 'block text-sm font-medium text-[var(--text-secondary)]';
 
   const toggleSlot = (day: string, slot: string) => {
@@ -132,7 +132,7 @@ export default function LawyerRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-12 px-4 sm:px-6 lg:px-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] py-12 px-4 sm:px-6 lg:px-8 text-[var(--text-primary)]">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           

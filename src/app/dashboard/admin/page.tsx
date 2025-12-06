@@ -62,7 +62,7 @@ export default function AdminDashboard() {
 
   if (authLoading || overviewLoading || bookingsLoading || analyticsLoading) {
     return (
-      <div className="min-h-screen bg-[#050c26] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d5b47f]"></div>
       </div>
     );
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
   const metrics = overview?.metrics || { total: 0, approved: 0, pending: 0 };
 
   return (
-    <div className="min-h-screen bg-[#050c26] py-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -170,14 +170,14 @@ export default function AdminDashboard() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(lawyer._id)}
-                          className="px-4 py-2 rounded-lg bg-[#1f3d36] text-[#46d3a1] border border-[#46d3a1]/30 hover:bg-[#274b43] flex items-center transition-colors"
+                          className="px-4 py-2 rounded-lg bg-[#e2f4ed] text-[#1f3d36] border border-[#46d3a1]/40 hover:bg-[#d4ede3] flex items-center transition-colors"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Approve
                         </button>
                         <button
                           onClick={() => handleReject(lawyer._id)}
-                          className="px-4 py-2 rounded-lg bg-[#3f1d2a] text-[#ff8c8c] border border-[#ff8c8c]/30 hover:bg-[#552534] flex items-center transition-colors"
+                          className="px-4 py-2 rounded-lg bg-[#fde8ed] text-[#a23a4c] border border-[#ff8c8c]/40 hover:bg-[#fad6df] flex items-center transition-colors"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
@@ -233,12 +233,12 @@ export default function AdminDashboard() {
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-semibold ${
                               booking.status === 'confirmed'
-                                ? 'bg-[#1f3d36] text-[#46d3a1]'
+                                ? 'bg-[#e2f4ed] text-[#1f3d36]'
                                 : booking.status === 'pending'
-                                  ? 'bg-[#3a2c19] text-[#f3c969]'
+                                  ? 'bg-[#f9f0e2] text-[#8a5f2c]'
                                   : booking.status === 'completed'
-                                    ? 'bg-white/10 text-[#d5b47f]'
-                                    : 'bg-[#3f1d2a] text-[#ff8c8c]'
+                                    ? 'bg-[var(--brand-accent-soft)] text-[#8a5f2c]'
+                                    : 'bg-[#fde8ed] text-[#a23a4c]'
                             }`}
                           >
                             {booking.status}
