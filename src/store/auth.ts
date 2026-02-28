@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, AuthTokens, LawyerProfile } from '@/types';
 import { api } from '@/lib/api';
+import { clearTokens, setTokens } from '@/lib/auth/token-storage';
 
 interface AuthState {
   user: User | null;
@@ -26,10 +27,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       setAuth: (user, tokens, lawyerProfile) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', tokens.accessToken);
-          localStorage.setItem('refreshToken', tokens.refreshToken);
-        }
+        setTokens(tokens);
         set({
           user,
           tokens,
@@ -39,10 +37,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-        }
+        clearTokens();
         set({
           user: null,
           tokens: null,
@@ -72,16 +67,13 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
           });
         } catch {
+          clearTokens();
           set({
             user: null,
             tokens: null,
             lawyerProfile: null,
             isAuthenticated: false,
           });
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-          }
         } finally {
           set({ isLoading: false });
         }
@@ -96,6 +88,11 @@ export const useAuthStore = create<AuthState>()(
         lawyerProfile: state.lawyerProfile,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.tokens) {
+          setTokens(state.tokens);
+        }
+      },
     },
   ),
 );

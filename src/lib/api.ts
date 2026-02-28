@@ -10,6 +10,12 @@ import type {
   ChatSessionSummary,
   SearchLawyersParams,
 } from '@/types';
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from '@/lib/auth/token-storage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4848/api';
 
@@ -26,11 +32,9 @@ class ApiClient {
 
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('accessToken');
-          if (token && config.headers) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
+        const token = getAccessToken();
+        if (token && config.headers) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
@@ -40,30 +44,53 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config as
+          | (InternalAxiosRequestConfig & { _retry?: boolean })
+          | undefined;
+
+        if (!originalRequest) {
+          return Promise.reject(error);
+        }
+
+        if (
+          error.response?.status === 401 &&
+          typeof originalRequest.url === 'string' &&
+          originalRequest.url.includes('/auth/refresh')
+        ) {
+          clearTokens();
+          if (typeof window !== 'undefined' && window.location.pathname !== '/auth/login') {
+            window.location.href = '/auth/login';
+          }
+          return Promise.reject(error);
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
           try {
-            const refreshToken = localStorage.getItem('refreshToken');
+            const refreshToken = getRefreshToken();
             if (refreshToken) {
               const response = await axios.post(`${API_URL}/auth/refresh`, {
                 refreshToken,
               });
-              const { tokens } = response.data;
-              localStorage.setItem('accessToken', tokens.accessToken);
-              localStorage.setItem('refreshToken', tokens.refreshToken);
-              originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
+              const { tokens } = response.data as { tokens: { accessToken: string; refreshToken: string } };
+              setTokens(tokens);
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
+              }
               return this.client(originalRequest);
             }
           } catch (refreshError) {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
+            clearTokens();
             if (typeof window !== 'undefined') {
               window.location.href = '/auth/login';
             }
             return Promise.reject(refreshError);
+          }
+
+          clearTokens();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login';
           }
         }
 
