@@ -100,7 +100,7 @@ export default function RegisterPage() {
                   : 'bg-white/5 text-[var(--text-secondary)] border-white/10'
                 }`}
             >
-              Client
+              User
             </Link>
             <Link
               href="/auth/register?type=lawyer"

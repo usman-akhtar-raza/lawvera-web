@@ -1,15 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Bot,
+  BookCopy,
   History,
   Loader2,
   MessageCircle,
@@ -23,7 +18,13 @@ import {
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import type { ChatMessage, ChatSessionSummary } from '@/types';
+import {
+  UserRole,
+  type ChatCitation,
+  type ChatMessage,
+  type ChatRetrievedPreview,
+  type ChatSessionSummary,
+} from '@/types';
 import { getErrorMessage } from '@/lib/error-message';
 
 type LocalMessage = {
@@ -31,6 +32,8 @@ type LocalMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  citations: ChatCitation[];
+  retrievedPreview: ChatRetrievedPreview[];
 };
 
 const suggestedPrompts = [
@@ -81,6 +84,8 @@ const mapHistoryToLocal = (history: ChatMessage[]): LocalMessage[] =>
     role: message.role,
     content: message.content,
     createdAt: message.createdAt,
+    citations: [],
+    retrievedPreview: [],
   }));
 
 export function ChatWidget() {
@@ -136,7 +141,7 @@ export function ChatWidget() {
   }, [isOpen]);
 
   useEffect(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -208,21 +213,31 @@ export function ChatWidget() {
 
     setMessages((prev) => [
       ...prev,
-      { id: tempId, role: 'user', content: question, createdAt: timestamp },
+      {
+        id: tempId,
+        role: 'user',
+        content: question,
+        createdAt: timestamp,
+        citations: [],
+        retrievedPreview: [],
+      },
     ]);
     setInput('');
     setIsSending(true);
 
     try {
-      const response = await api.askQuestion(
-        question,
-        activeSessionId || undefined,
-      );
+      const response = await api.askQuestion({
+        message: question,
+        sessionId: activeSessionId || undefined,
+        mode: user?.role === UserRole.LAWYER ? 'lawyer' : 'user',
+      });
       const assistantMessage: LocalMessage = {
         id: generateTempId(),
         role: 'assistant',
         content: response.answer,
         createdAt: new Date().toISOString(),
+        citations: response.citations ?? [],
+        retrievedPreview: response.retrievedPreview ?? [],
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setActiveSessionId(response.sessionId);
@@ -240,8 +255,8 @@ export function ChatWidget() {
       return 'New conversation';
     }
     return (
-      sessions.find((session) => session.sessionId === activeSessionId)
-        ?.title || 'Conversation'
+      sessions.find((session) => session.sessionId === activeSessionId)?.title ||
+      'Conversation'
     );
   }, [activeSessionId, sessions]);
 
@@ -281,14 +296,14 @@ export function ChatWidget() {
                     {user?.name ?? 'Guest'}
                   </p>
                 </div>
-            <button
-              onClick={() => setIsOpen(false)}
+                <button
+                  onClick={() => setIsOpen(false)}
                   className="rounded-full border border-white/10 p-2 text-[var(--text-muted)] transition hover:border-white/30 hover:text-white"
                   aria-label="Close chat"
-            >
+                >
                   <X className="h-4 w-4" />
-            </button>
-          </div>
+                </button>
+              </div>
 
               {isAuthenticated ? (
                 <>
@@ -338,7 +353,7 @@ export function ChatWidget() {
                             <p className="pr-6 text-sm font-medium text-[var(--text-primary)]">
                               {session.title}
                             </p>
-                            <p className="mt-1 text-xs text-[var(--text-muted)] line-clamp-2">
+                            <p className="mt-1 line-clamp-2 text-xs text-[var(--text-muted)]">
                               {session.lastMessagePreview ||
                                 'Tap to continue your conversation'}
                             </p>
@@ -370,8 +385,8 @@ export function ChatWidget() {
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white p-5 text-[var(--text-primary)] shadow-sm">
                   <p className="text-base font-semibold">Sign in to sync chats</p>
                   <p className="mt-2 text-sm text-[var(--text-muted)]">
-                    Create an account to access your AI assistant and saved
-                    history across devices.
+                    Create an account to access your AI assistant and saved history
+                    across devices.
                   </p>
                   <Link
                     href="/auth/login"
@@ -396,7 +411,7 @@ export function ChatWidget() {
                 {isSending && (
                   <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating response...
+                    Streaming response...
                   </div>
                 )}
               </header>
@@ -411,8 +426,8 @@ export function ChatWidget() {
                       Sign in to chat with Lawvera Copilot
                     </h4>
                     <p className="mt-2 max-w-md text-sm text-[var(--text-muted)]">
-                      Login or create an account to unlock instant legal guidance from
-                      our AI assistant tailored to your needs.
+                      Login or create an account to unlock instant legal guidance
+                      from our AI assistant tailored to your needs.
                     </p>
                     <Link
                       href="/auth/login"
@@ -425,15 +440,15 @@ export function ChatWidget() {
                   <>
                     {!messages.length && !historyLoading && (
                       <div className="mx-auto max-w-2xl text-center">
-                    <div className="inline-flex rounded-full border border-white/10 bg-white p-3 text-[var(--brand-primary)] shadow-sm">
+                        <div className="inline-flex rounded-full border border-white/10 bg-white p-3 text-[var(--brand-primary)] shadow-sm">
                           <Sparkles className="h-6 w-6" />
                         </div>
                         <h4 className="mt-4 text-2xl font-semibold text-[var(--text-primary)]">
                           Welcome to your legal co-pilot
                         </h4>
                         <p className="mt-2 text-sm text-[var(--text-muted)]">
-                          Ask questions about legal processes, documents, or
-                          best practices and get instant, friendly guidance.
+                          Ask questions about legal processes, documents, or best
+                          practices and get instant grounded guidance.
                         </p>
                         <div className="mt-6 grid gap-3 sm:grid-cols-2">
                           {suggestedPrompts.map((prompt) => (
@@ -451,15 +466,15 @@ export function ChatWidget() {
                     )}
 
                     {historyLoading && (
-                        <div className="space-y-4">
+                      <div className="space-y-4">
                         {Array.from({ length: 3 }).map((_, index) => (
                           <div key={`history-skeleton-${index}`} className="space-y-3">
                             <div className="h-4 w-24 rounded bg-white/40" />
                             <div className="h-20 rounded-2xl bg-white/60" />
                           </div>
                         ))}
-              </div>
-            )}
+                      </div>
+                    )}
 
                     <div className="space-y-6">
                       {messages.map((message) => (
@@ -469,12 +484,12 @@ export function ChatWidget() {
                             message.role === 'user'
                               ? 'flex-row-reverse text-right'
                               : 'text-left'
-                }`}
-              >
-                <div
+                          }`}
+                        >
+                          <div
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] ${
                               message.role === 'user'
-                                ? 'text-[#1b1205] bg-gradient-to-br from-[#f3e2c1] to-[#d5b47f]'
+                                ? 'bg-gradient-to-br from-[#f3e2c1] to-[#d5b47f] text-[#1b1205]'
                                 : 'text-[var(--brand-primary)]'
                             }`}
                           >
@@ -486,18 +501,58 @@ export function ChatWidget() {
                           </div>
                           <div
                             className={`max-w-3xl rounded-3xl border px-4 py-3 text-sm leading-relaxed shadow-lg shadow-black/20 ${
-                    message.role === 'user'
+                              message.role === 'user'
                                 ? 'border-transparent bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205]'
                                 : 'border-white/5 bg-white/[0.04] text-[var(--text-primary)]'
                             }`}
                           >
                             <p className="whitespace-pre-wrap">{message.content}</p>
+                            {message.role === 'assistant' &&
+                              (message.citations.length > 0 ||
+                                message.retrievedPreview.length > 0) && (
+                                <div className="mt-3 rounded-2xl border border-white/10 bg-[var(--surface-muted)] p-3">
+                                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                                    <BookCopy className="h-3.5 w-3.5" />
+                                    Sources
+                                  </div>
+                                  {message.citations.length > 0 && (
+                                    <div className="space-y-1.5">
+                                      {message.citations.map((citation) => (
+                                        <div
+                                          key={`${message.id}-${citation.chunkId}`}
+                                          className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-[var(--text-secondary)]"
+                                        >
+                                          <p className="font-semibold text-[var(--text-primary)]">
+                                            {citation.sourceTitle}
+                                          </p>
+                                          <p className="mt-1">Chunk: {citation.chunkId}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {message.retrievedPreview.length > 0 && (
+                                    <div className="mt-2 space-y-2">
+                                      {message.retrievedPreview.slice(0, 2).map((preview, idx) => (
+                                        <div
+                                          key={`${message.id}-preview-${idx}`}
+                                          className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-[var(--text-secondary)]"
+                                        >
+                                          <p className="font-semibold text-[var(--text-primary)]">
+                                            {preview.sourceTitle}
+                                          </p>
+                                          <p className="mt-1 line-clamp-3">{preview.snippet}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             <span className="mt-2 block text-xs text-[var(--text-muted)]">
                               {formatTimestamp(message.createdAt)}
                             </span>
-                </div>
-              </div>
-            ))}
+                          </div>
+                        </div>
+                      ))}
 
                       {isSending && (
                         <div className="flex gap-3 text-left">
@@ -515,20 +570,21 @@ export function ChatWidget() {
                                 className="h-2 w-2 animate-bounce rounded-full bg-white/70"
                                 style={{ animationDelay: '0.3s' }}
                               />
-                  </div>
-                </div>
-              </div>
-            )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-            <div ref={messagesEndRef} />
+                    <div ref={messagesEndRef} />
                     <p className="mt-6 text-center text-xs text-[var(--text-muted)]">
-                      Lawvera Copilot provides general guidance. Always consult a
-                      licensed attorney for formal legal advice.
+                      {user?.role === UserRole.LAWYER
+                        ? 'Lawyer mode is grounded to uploaded law books for drafting support and research assistance.'
+                        : 'User mode provides plain-language guidance from uploaded law books and does not replace attorney advice.'}
                     </p>
                   </>
                 )}
-          </div>
+              </div>
 
               {!showAuthWall && (
                 <form
@@ -538,7 +594,7 @@ export function ChatWidget() {
                 >
                   <div className="rounded-3xl border border-white/10 bg-[var(--surface-muted)] p-4 shadow-2xl shadow-[#d5b47f]/20">
                     <textarea
-                value={input}
+                      value={input}
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' && !event.shiftKey) {
@@ -567,8 +623,8 @@ export function ChatWidget() {
                         ))}
                       </div>
                       <div className="ml-auto flex items-center gap-2">
-              <button
-                type="submit"
+                        <button
+                          type="submit"
                           disabled={isSending || !input.trim()}
                           className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-5 py-2 text-sm font-semibold text-[#1b1205] transition disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -578,11 +634,11 @@ export function ChatWidget() {
                             <Send className="h-4 w-4" />
                           )}
                           Send
-              </button>
+                        </button>
                       </div>
                     </div>
                   </div>
-          </form>
+                </form>
               )}
             </section>
           </div>

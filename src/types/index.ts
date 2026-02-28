@@ -83,6 +83,26 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface ChatCitation {
+  sourceTitle: string;
+  sourceId: string;
+  chunkId: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChatRetrievedPreview {
+  sourceTitle: string;
+  metadata?: Record<string, unknown>;
+  snippet: string;
+}
+
+export interface ChatAskResponse {
+  sessionId: string;
+  answer: string;
+  citations: ChatCitation[];
+  retrievedPreview: ChatRetrievedPreview[];
+}
+
 export interface ChatSessionSummary {
   sessionId: string;
   title: string;
@@ -124,17 +144,3 @@ export interface PaginatedResponse<T> {
     limit: number;
   };
 }
-
-export interface SearchLawyersParams {
-  page?: number;
-  limit?: number;
-  specialization?: string;
-  city?: string;
-  minFee?: number;
-  maxFee?: number;
-  minExperience?: number;
-  minRating?: number;
-  availability?: 'today' | 'tomorrow';
-  search?: string; // For frontend filtering only
-}
-

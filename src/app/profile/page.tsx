@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { getRoleDisplayName } from '@/lib/role-display';
 
 const themeOptions = [
   {
@@ -130,9 +131,7 @@ export default function ProfileSettingsPage() {
             <div>
               <p className="text-sm text-[var(--text-muted)]">Role</p>
               <p className="text-lg font-medium mt-1 text-[#b07a43]">
-                {user?.role
-                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                  : 'Client'}
+                {getRoleDisplayName(user?.role)}
               </p>
             </div>
             <div>
@@ -149,4 +148,3 @@ export default function ProfileSettingsPage() {
     </div>
   );
 }
-

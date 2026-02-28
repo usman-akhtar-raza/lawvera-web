@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Users, CheckCircle, XCircle, Calendar } from 'lucide-react';
+import {
+  Users,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  BookOpen,
+  Upload,
+  Trash2,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import type { Booking, LawyerProfile } from '@/types';
@@ -14,6 +22,14 @@ import { asLawyerProfile, asUser } from '@/lib/type-guards';
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bookForm, setBookForm] = useState({
+    title: '',
+    edition: '',
+    jurisdiction: '',
+    language: '',
+  });
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -36,6 +52,16 @@ export default function AdminDashboard() {
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['admin-analytics'],
     queryFn: () => api.getAnalytics(),
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const {
+    data: lawSources,
+    isLoading: lawSourcesLoading,
+    refetch: refetchLawSources,
+  } = useQuery({
+    queryKey: ['admin-law-sources'],
+    queryFn: () => api.listLawSources(),
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -62,7 +88,64 @@ export default function AdminDashboard() {
     }
   };
 
-  if (authLoading || overviewLoading || bookingsLoading || analyticsLoading) {
+  const handleBookUpload = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedFile) {
+      toast.error('Please select a source file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      await api.uploadLawSource(selectedFile, {
+        title: bookForm.title || undefined,
+        edition: bookForm.edition || undefined,
+        jurisdiction: bookForm.jurisdiction || undefined,
+        language: bookForm.language || undefined,
+      });
+      setSelectedFile(null);
+      setBookForm({ title: '', edition: '', jurisdiction: '', language: '' });
+      toast.success('Book uploaded. Ingestion started.');
+      refetchLawSources();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to upload source'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleToggleSource = async (
+    sourceId: string,
+    status: 'active' | 'disabled',
+  ) => {
+    try {
+      await api.updateLawSourceStatus(sourceId, status);
+      refetchLawSources();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update source status'));
+    }
+  };
+
+  const handleDeleteSource = async (sourceId: string) => {
+    if (!confirm('Delete this law source?')) {
+      return;
+    }
+    try {
+      await api.deleteLawSource(sourceId);
+      toast.success('Source deleted');
+      refetchLawSources();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to delete source'));
+    }
+  };
+
+  if (
+    authLoading ||
+    overviewLoading ||
+    bookingsLoading ||
+    analyticsLoading ||
+    lawSourcesLoading
+  ) {
     return (
       <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d5b47f]"></div>
@@ -193,6 +276,133 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        <div className="brand-card p-6 mb-8">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Law Books</h2>
+            <span className="rounded-full border border-[#d5b47f]/40 bg-[var(--brand-accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b07a43]">
+              Admin only
+            </span>
+          </div>
+
+          <form onSubmit={handleBookUpload} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                type="text"
+                value={bookForm.title}
+                onChange={(event) =>
+                  setBookForm((prev) => ({ ...prev, title: event.target.value }))
+                }
+                placeholder="Title (optional)"
+                className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+              />
+              <input
+                type="text"
+                value={bookForm.edition}
+                onChange={(event) =>
+                  setBookForm((prev) => ({ ...prev, edition: event.target.value }))
+                }
+                placeholder="Edition (optional)"
+                className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+              />
+              <input
+                type="text"
+                value={bookForm.jurisdiction}
+                onChange={(event) =>
+                  setBookForm((prev) => ({
+                    ...prev,
+                    jurisdiction: event.target.value,
+                  }))
+                }
+                placeholder="Jurisdiction (optional)"
+                className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+              />
+              <input
+                type="text"
+                value={bookForm.language}
+                onChange={(event) =>
+                  setBookForm((prev) => ({ ...prev, language: event.target.value }))
+                }
+                placeholder="Language (optional)"
+                className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm">
+                <BookOpen className="h-4 w-4 text-[#b07a43]" />
+                <span>{selectedFile ? selectedFile.name : 'Choose PDF/TXT/MD'}</span>
+                <input
+                  type="file"
+                  accept=".pdf,.txt,.md"
+                  className="hidden"
+                  onChange={(event) =>
+                    setSelectedFile(event.target.files?.[0] || null)
+                  }
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={isUploading || !selectedFile}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-4 py-2 text-sm font-semibold text-[#1b1205] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {isUploading ? 'Uploading...' : 'Upload and ingest'}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-4 space-y-3">
+            {lawSources && lawSources.length > 0 ? (
+              lawSources.map((source) => (
+                <div
+                  key={source.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-semibold text-[var(--text-primary)]">
+                        {source.title}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {source.jurisdiction || 'General'} •{' '}
+                        {source.language || 'Unknown language'} •{' '}
+                        {new Date(source.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                        Status: {source.status} • Ingestion: {source.ingestionStatus}
+                        {source.warningText ? ` • ${source.warningText}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleToggleSource(
+                            source.id,
+                            source.status === 'active' ? 'disabled' : 'active',
+                          )
+                        }
+                        className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] hover:border-[#d5b47f]/50"
+                      >
+                        {source.status === 'active' ? 'Disable' : 'Enable'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSource(source.id)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#ff8c8c]/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-[#a23a4c] hover:bg-[#fde8ed]"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">
+                No law books uploaded yet.
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className="brand-card p-6">
           <h2 className="text-xl font-semibold mb-4">Recent Bookings</h2>

@@ -8,6 +8,7 @@ import { Menu, X, User, LogOut, Settings, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { getRoleDisplayName } from '@/lib/role-display';
 export function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -87,6 +88,9 @@ export function Navbar() {
                   <button className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-[var(--text-secondary)] hover:text-[#d5b47f]">
                     <User className="h-5 w-5" />
                     <span>{user?.name}</span>
+                    <span className="rounded-full border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[#b07a43]">
+                      {getRoleDisplayName(user?.role)}
+                    </span>
                   </button>
                   <div
                     className={`absolute right-0 mt-2 w-56 rounded-xl border border-white/10 py-2 shadow-2xl shadow-[#d5b47f]/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all ${dropdownCardClass}`}
@@ -216,4 +220,3 @@ export function Navbar() {
     </nav>
   );
 }
-

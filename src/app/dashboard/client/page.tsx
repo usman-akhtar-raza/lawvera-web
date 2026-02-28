@@ -73,7 +73,7 @@ export default function ClientDashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome, {user?.name}</h1>
           <p className="text-[var(--text-secondary)] mt-2">
-            Manage your appointments
+            Manage your user bookings and activity
           </p>
         </div>
 

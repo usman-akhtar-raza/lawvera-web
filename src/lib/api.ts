@@ -8,6 +8,7 @@ import type {
   PaginatedResponse,
   ChatMessage,
   ChatSessionSummary,
+  ChatAskResponse,
   SearchLawyersParams,
 } from '@/types';
 import {
@@ -18,6 +19,20 @@ import {
 } from '@/lib/auth/token-storage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4848/api';
+
+export type LawSourceStatus = 'active' | 'disabled';
+
+export type LawSourceRecord = {
+  id: string;
+  title: string;
+  edition: string | null;
+  jurisdiction: string | null;
+  language: string | null;
+  status: LawSourceStatus;
+  ingestionStatus: string;
+  warningText: string | null;
+  createdAt: string;
+};
 
 class ApiClient {
   private client: AxiosInstance;
@@ -233,12 +248,20 @@ class ApiClient {
 
   // Chat
   async askQuestion(
-    message: string,
-    sessionId?: string,
-  ): Promise<{ sessionId: string; answer: string }> {
+    payload: {
+      message: string;
+      sessionId?: string;
+      mode?: 'user' | 'lawyer';
+      jurisdiction?: string;
+      sourceIds?: string[];
+    },
+  ): Promise<ChatAskResponse> {
     const response = await this.client.post('/chat/ask', {
-      message,
-      sessionId,
+      message: payload.message,
+      sessionId: payload.sessionId,
+      mode: payload.mode,
+      jurisdiction: payload.jurisdiction,
+      sourceIds: payload.sourceIds,
     });
     return response.data;
   }
@@ -290,6 +313,45 @@ class ApiClient {
     today: number;
   }> {
     const response = await this.client.get('/bookings/admin/analytics');
+    return response.data;
+  }
+
+  async listLawSources(): Promise<LawSourceRecord[]> {
+    const response = await this.client.get('/law-sources');
+    return response.data;
+  }
+
+  async uploadLawSource(file: File, payload: {
+    title?: string;
+    edition?: string;
+    jurisdiction?: string;
+    language?: string;
+  }): Promise<LawSourceRecord> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (payload.title) formData.append('title', payload.title);
+    if (payload.edition) formData.append('edition', payload.edition);
+    if (payload.jurisdiction) formData.append('jurisdiction', payload.jurisdiction);
+    if (payload.language) formData.append('language', payload.language);
+
+    const response = await this.client.post('/law-sources/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async updateLawSourceStatus(
+    id: string,
+    status: LawSourceStatus,
+  ): Promise<LawSourceRecord> {
+    const response = await this.client.patch(`/law-sources/${id}`, { status });
+    return response.data;
+  }
+
+  async deleteLawSource(id: string): Promise<{ success: true }> {
+    const response = await this.client.delete(`/law-sources/${id}`);
     return response.data;
   }
 }
