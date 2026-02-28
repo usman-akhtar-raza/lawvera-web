@@ -8,7 +8,7 @@ interface LawyerCardProps {
 }
 
 export function LawyerCard({ lawyer }: LawyerCardProps) {
-  const user = lawyer.user as any;
+  const user = lawyer.user;
   const rating = lawyer.ratingAverage || 0;
   const reviewCount = lawyer.ratingCount || 0;
 
@@ -69,4 +69,3 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
     </Link>
   );
 }
-

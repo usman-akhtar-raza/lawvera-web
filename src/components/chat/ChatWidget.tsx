@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import type { ChatMessage, ChatSessionSummary } from '@/types';
+import { getErrorMessage } from '@/lib/error-message';
 
 type LocalMessage = {
   id: string;
@@ -106,8 +107,8 @@ export function ChatWidget() {
       try {
         const data = await api.getChatSessions();
         setSessions(data);
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Unable to load chats');
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Unable to load chats'));
       } finally {
         if (withSpinner) {
           setSessionsLoading(false);
@@ -159,10 +160,8 @@ export function ChatWidget() {
       try {
         const history = await api.getChatHistory(sessionId);
         setMessages(mapHistoryToLocal(history));
-      } catch (error: any) {
-        toast.error(
-          error.response?.data?.message || 'Unable to load conversation',
-        );
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Unable to load conversation'));
         setActiveSessionId(previousId);
       } finally {
         setHistoryLoading(false);
@@ -187,10 +186,8 @@ export function ChatWidget() {
         handleNewChat();
       }
       toast.success('Conversation deleted');
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || 'Failed to delete conversation',
-      );
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to delete conversation'));
     }
   };
 
@@ -230,8 +227,8 @@ export function ChatWidget() {
       setMessages((prev) => [...prev, assistantMessage]);
       setActiveSessionId(response.sessionId);
       loadSessions(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to get response');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to get response'));
       setMessages((prev) => prev.filter((message) => message.id !== tempId));
     } finally {
       setIsSending(false);
@@ -594,4 +591,3 @@ export function ChatWidget() {
     </>
   );
 }
-

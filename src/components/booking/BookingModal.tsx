@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, Clock } from 'lucide-react';
+import { X } from 'lucide-react';
 import { format, addDays, isAfter, startOfDay } from 'date-fns';
-import type { LawyerProfile, AvailabilitySlot } from '@/types';
+import type { LawyerProfile } from '@/types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/error-message';
 
 interface BookingModalProps {
   lawyer: LawyerProfile;
@@ -73,8 +74,8 @@ export function BookingModal({
       setSelectedDate(null);
       setSelectedTime('');
       setReason('');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to book appointment');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to book appointment'));
     } finally {
       setIsSubmitting(false);
     }
@@ -200,4 +201,3 @@ export function BookingModal({
     </div>
   );
 }
-

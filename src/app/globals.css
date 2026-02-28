@@ -2,6 +2,8 @@
 
 :root {
   color-scheme: light;
+  --font-geist-sans: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  --font-geist-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --background: #fbf7f0;
   --background-muted: #f4ede2;
   --surface: #ffffff;

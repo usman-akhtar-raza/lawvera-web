@@ -3,12 +3,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, User, X } from 'lucide-react';
+import { Calendar, Clock, User } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { BookingStatus } from '@/types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/error-message';
+import { asLawyerProfile, asUser } from '@/lib/type-guards';
 
 export default function ClientDashboard() {
   const router = useRouter();
@@ -34,8 +36,8 @@ export default function ClientDashboard() {
       await api.cancelBooking(bookingId);
       toast.success('Appointment cancelled');
       refetch();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to cancel');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to cancel'));
     }
   };
 
@@ -116,8 +118,8 @@ export default function ClientDashboard() {
             <h2 className="text-xl font-semibold mb-4">Pending Appointments</h2>
             <div className="space-y-4">
               {pending.map((booking) => {
-                const lawyer = booking.lawyer as any;
-                const lawyerUser = lawyer?.user || {};
+                const lawyer = asLawyerProfile(booking.lawyer);
+                const lawyerUser = asUser(lawyer?.user);
                 return (
                   <div
                     key={booking._id}
@@ -126,7 +128,7 @@ export default function ClientDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">
-                          {lawyerUser.name || 'Lawyer'}
+                          {lawyerUser?.name || 'Lawyer'}
                         </h3>
                         <p className="text-[var(--text-secondary)]">
                           {lawyer?.specialization}
@@ -155,8 +157,8 @@ export default function ClientDashboard() {
           {upcoming.length > 0 ? (
             <div className="space-y-4">
               {upcoming.map((booking) => {
-                const lawyer = booking.lawyer as any;
-                const lawyerUser = lawyer?.user || {};
+                const lawyer = asLawyerProfile(booking.lawyer);
+                const lawyerUser = asUser(lawyer?.user);
                 return (
                   <div
                     key={booking._id}
@@ -165,7 +167,7 @@ export default function ClientDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">
-                          {lawyerUser.name || 'Lawyer'}
+                          {lawyerUser?.name || 'Lawyer'}
                         </h3>
                         <p className="text-[var(--text-secondary)]">
                           {lawyer?.specialization}
@@ -201,8 +203,8 @@ export default function ClientDashboard() {
           {past.length > 0 ? (
             <div className="space-y-4">
               {past.map((booking) => {
-                const lawyer = booking.lawyer as any;
-                const lawyerUser = lawyer?.user || {};
+                const lawyer = asLawyerProfile(booking.lawyer);
+                const lawyerUser = asUser(lawyer?.user);
                 return (
                   <div
                     key={booking._id}
@@ -210,7 +212,7 @@ export default function ClientDashboard() {
                   >
                     <div>
                       <h3 className="font-semibold text-lg">
-                        {lawyerUser.name || 'Lawyer'}
+                        {lawyerUser?.name || 'Lawyer'}
                       </h3>
                       <p className="text-[var(--text-secondary)]">
                         {lawyer?.specialization}
@@ -241,4 +243,3 @@ export default function ClientDashboard() {
     </div>
   );
 }
-

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { Briefcase } from 'lucide-react';
+import { getErrorMessage } from '@/lib/error-message';
 
 interface LoginForm {
   email: string;
@@ -16,7 +17,6 @@ interface LoginForm {
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -31,12 +31,13 @@ export default function LoginPage() {
       const response = await api.login(data.email, data.password);
       setAuth(response.user, response.tokens, response.lawyerProfile);
       toast.success('Login successful!');
-      const redirect = searchParams.get('redirect') || '/dashboard/client';
+      const redirect =
+        (typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('redirect')
+          : null) || '/dashboard/client';
       router.push(redirect);
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || 'Invalid email or password',
-      );
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Invalid email or password'));
     } finally {
       setIsLoading(false);
     }
@@ -134,4 +135,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

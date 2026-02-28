@@ -4,6 +4,7 @@ import type {
   User,
   LawyerProfile,
   Booking,
+  BookingStatus,
   PaginatedResponse,
   ChatMessage,
   ChatSessionSummary,
@@ -267,4 +268,3 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-

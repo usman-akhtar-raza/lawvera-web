@@ -21,9 +21,23 @@ const STORAGE_KEY = 'lawvera-theme';
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+const getInitialTheme = (): ThemeMode => {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored === 'dark' || stored === 'light') {
+    return stored;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('light');
-  const [initialized, setInitialized] = useState(false);
+  const [theme, setThemeState] = useState<ThemeMode>(() => getInitialTheme());
 
   const applyThemeClass = useCallback((value: ThemeMode) => {
     if (typeof document === 'undefined') return;
@@ -32,23 +46,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial =
-      stored === 'dark' || stored === 'light' ? stored : prefersDark ? 'dark' : 'light';
-    setThemeState(initial);
-    setInitialized(true);
-    applyThemeClass(initial);
-  }, [applyThemeClass]);
-
-  useEffect(() => {
-    if (!initialized || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
     applyThemeClass(theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme, initialized, applyThemeClass]);
+  }, [theme, applyThemeClass]);
 
   const updateTheme = useCallback((value: ThemeMode) => {
     setThemeState(value);
@@ -77,4 +78,3 @@ export function useTheme() {
   }
   return context;
 }
-

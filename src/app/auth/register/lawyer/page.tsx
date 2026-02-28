@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
-import { Briefcase } from 'lucide-react';
+import { getErrorMessage } from '@/lib/error-message';
 
 interface LawyerRegisterForm {
   name: string;
@@ -112,7 +112,18 @@ export default function LawyerRegisterPage() {
 
     setIsLoading(true);
     try {
-      const { confirmPassword, ...registerData } = data;
+      const registerData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        specialization: data.specialization,
+        experienceYears: data.experienceYears,
+        city: data.city,
+        consultationFee: data.consultationFee,
+        education: data.education,
+        description: data.description,
+        profilePhotoUrl: data.profilePhotoUrl,
+      };
       const response = await api.registerLawyer({
         ...registerData,
         availability,
@@ -122,9 +133,9 @@ export default function LawyerRegisterPage() {
         'Registration successful! Your profile is pending approval.',
       );
       router.push('/dashboard/lawyer');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
-        error.response?.data?.message || 'Registration failed. Please try again.',
+        getErrorMessage(error, 'Registration failed. Please try again.'),
       );
     } finally {
       setIsLoading(false);
@@ -386,4 +397,3 @@ export default function LawyerRegisterPage() {
     </div>
   );
 }
-

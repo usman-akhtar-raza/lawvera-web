@@ -10,7 +10,6 @@ import {
   Briefcase,
   DollarSign,
   Calendar,
-  Clock,
   GraduationCap,
   MessageSquare,
 } from 'lucide-react';
@@ -19,6 +18,7 @@ import { BookingModal } from '@/components/booking/BookingModal';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { getErrorMessage } from '@/lib/error-message';
 
 export default function LawyerDetailPage() {
   const params = useParams();
@@ -46,8 +46,8 @@ export default function LawyerDetailPage() {
       toast.success('Review added successfully!');
       setReviewComment('');
       // Refetch lawyer data
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add review');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to add review'));
     }
   };
 
@@ -72,7 +72,7 @@ export default function LawyerDetailPage() {
     );
   }
 
-  const user = lawyer.user as any;
+  const user = lawyer.user;
   const reviews = lawyer.reviews || [];
 
   return (
@@ -308,4 +308,3 @@ export default function LawyerDetailPage() {
     </div>
   );
 }
-

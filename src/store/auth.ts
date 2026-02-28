@@ -71,7 +71,7 @@ export const useAuthStore = create<AuthState>()(
             lawyerProfile: data.lawyerProfile || null,
             isAuthenticated: true,
           });
-        } catch (error) {
+        } catch {
           set({
             user: null,
             tokens: null,
@@ -99,4 +99,3 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
-

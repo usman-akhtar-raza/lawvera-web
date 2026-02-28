@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
-import { Briefcase } from 'lucide-react';
+import { getErrorMessage } from '@/lib/error-message';
 
 interface RegisterForm {
   name: string;
@@ -20,8 +20,7 @@ interface RegisterForm {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const type = searchParams.get('type') || 'client';
+  const [type, setType] = useState<'client' | 'lawyer'>('client');
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -32,6 +31,14 @@ export default function RegisterPage() {
   } = useForm<RegisterForm>();
 
   const password = watch('password');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const queryType = new URLSearchParams(window.location.search).get('type');
+    setType(queryType === 'lawyer' ? 'lawyer' : 'client');
+  }, []);
 
   const onSubmit = async (data: RegisterForm) => {
     if (data.password !== data.confirmPassword) {
@@ -47,14 +54,20 @@ export default function RegisterPage() {
         return;
       }
 
-      const { confirmPassword, ...registerData } = data;
+      const registerData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        city: data.city,
+        phone: data.phone,
+      };
       const response = await api.registerClient(registerData);
       setAuth(response.user, response.tokens);
       toast.success('Registration successful!');
       router.push('/dashboard/client');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
-        error.response?.data?.message || 'Registration failed. Please try again.',
+        getErrorMessage(error, 'Registration failed. Please try again.'),
       );
     } finally {
       setIsLoading(false);
@@ -251,4 +264,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

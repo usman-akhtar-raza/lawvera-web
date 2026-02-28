@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, Clock, CheckCircle, XCircle, Settings } from 'lucide-react';
@@ -9,12 +9,12 @@ import { useAuthStore } from '@/store/auth';
 import { BookingStatus } from '@/types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/error-message';
+import { asUser } from '@/lib/type-guards';
 
 export default function LawyerDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
-  const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
-  const [statusAction, setStatusAction] = useState<BookingStatus | null>(null);
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -33,10 +33,8 @@ export default function LawyerDashboard() {
       await api.updateBookingStatus(bookingId, { status });
       toast.success(`Appointment ${status}`);
       refetch();
-      setSelectedBooking(null);
-      setStatusAction(null);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update status'));
     }
   };
 
@@ -79,7 +77,7 @@ export default function LawyerDashboard() {
         {profile?.status === 'pending' && (
           <div className="rounded-lg border border-[#f3c969]/30 bg-[#f9f0e2] p-4 mb-6">
             <p className="text-[#8a5f2c]">
-              Your profile is pending approval. You'll be able to receive
+              Your profile is pending approval. You&apos;ll be able to receive
               bookings once approved.
             </p>
           </div>
@@ -125,8 +123,8 @@ export default function LawyerDashboard() {
           <div className="brand-card p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Pending Approvals</h2>
             <div className="space-y-4">
-              {pending.map((booking: any) => {
-                const client = booking.client as any;
+              {pending.map((booking) => {
+                const client = asUser(booking.client);
                 return (
                   <div
                     key={booking._id}
@@ -182,8 +180,8 @@ export default function LawyerDashboard() {
           <h2 className="text-xl font-semibold mb-4">Upcoming Appointments</h2>
           {upcoming.length > 0 ? (
             <div className="space-y-4">
-              {upcoming.map((booking: any) => {
-                const client = booking.client as any;
+              {upcoming.map((booking) => {
+                const client = asUser(booking.client);
                 return (
                   <div
                     key={booking._id}
@@ -228,4 +226,3 @@ export default function LawyerDashboard() {
     </div>
   );
 }
-

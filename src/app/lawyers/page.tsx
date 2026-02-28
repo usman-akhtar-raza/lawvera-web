@@ -1,22 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Search, Filter, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { LawyerProfile, SearchLawyersParams } from '@/types';
+import type { SearchLawyersParams } from '@/types';
 import { LawyerCard } from '@/components/lawyer/LawyerCard';
 
-export default function LawyersPage() {
-  const searchParams = useSearchParams();
-  const [filters, setFilters] = useState<SearchLawyersParams>({
+const getInitialFilters = (): SearchLawyersParams => {
+  if (typeof window === 'undefined') {
+    return { page: 1, limit: 12 };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return {
     page: 1,
     limit: 12,
-    specialization: searchParams.get('specialization') || undefined,
-    city: searchParams.get('city') || undefined,
-    search: searchParams.get('search') || undefined,
-  });
+    specialization: params.get('specialization') || undefined,
+    city: params.get('city') || undefined,
+    search: params.get('search') || undefined,
+  };
+};
+
+export default function LawyersPage() {
+  const [filters, setFilters] = useState<SearchLawyersParams>(
+    () => getInitialFilters(),
+  );
   const [showFilters, setShowFilters] = useState(false);
   const [specializations, setSpecializations] = useState<
     Array<{ _id: string; name: string }>
@@ -26,10 +35,11 @@ export default function LawyersPage() {
     api.getSpecializations().then(setSpecializations).catch(console.error);
   }, []);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['lawyers', filters],
     queryFn: () => {
-      const { search, ...apiFilters } = filters;
+      const apiFilters = { ...filters };
+      delete apiFilters.search;
       return api.searchLawyers(apiFilters);
     },
   });
@@ -37,15 +47,18 @@ export default function LawyersPage() {
   const filteredData = data?.data.filter((lawyer) => {
     if (!filters.search) return true;
     const searchLower = filters.search.toLowerCase();
-    const user = lawyer.user as any;
-    return (
-      user?.name?.toLowerCase().includes(searchLower) ||
-      lawyer.specialization?.toLowerCase().includes(searchLower) ||
-      lawyer.city?.toLowerCase().includes(searchLower)
-    );
+      const user = lawyer.user;
+      return (
+        user?.name?.toLowerCase().includes(searchLower) ||
+        lawyer.specialization?.toLowerCase().includes(searchLower) ||
+        lawyer.city?.toLowerCase().includes(searchLower)
+      );
   });
 
-  const handleFilterChange = (key: keyof SearchLawyersParams, value: any) => {
+  const handleFilterChange = <K extends keyof SearchLawyersParams>(
+    key: K,
+    value: SearchLawyersParams[K],
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
@@ -59,6 +72,7 @@ export default function LawyersPage() {
       key !== 'limit' &&
       filters[key as keyof SearchLawyersParams],
   );
+  const paginationMeta = data?.meta;
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8">
@@ -211,12 +225,12 @@ export default function LawyersPage() {
                 </label>
                 <select
                   value={filters.availability || ''}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      'availability',
-                      e.target.value || undefined,
-                    )
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value as
+                      | SearchLawyersParams['availability']
+                      | '';
+                    handleFilterChange('availability', value || undefined);
+                  }}
                   className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                 >
                   <option value="">Any</option>
@@ -247,7 +261,7 @@ export default function LawyersPage() {
                 <LawyerCard key={lawyer._id} lawyer={lawyer} />
               ))}
             </div>
-            {data.meta.total > data.meta.limit && (
+            {paginationMeta && paginationMeta.total > paginationMeta.limit && (
               <div className="mt-8 flex justify-center gap-4 text-sm">
                 <button
                   onClick={() =>
@@ -263,7 +277,7 @@ export default function LawyersPage() {
                 </button>
                 <span className="px-4 py-2 text-[var(--text-secondary)]">
                   Page {filters.page} of{' '}
-                  {Math.ceil(data.meta.total / data.meta.limit)}
+                  {Math.ceil(paginationMeta.total / paginationMeta.limit)}
                 </span>
                 <button
                   onClick={() =>
@@ -273,7 +287,8 @@ export default function LawyersPage() {
                     }))
                   }
                   disabled={
-                    filters.page! >= Math.ceil(data.meta.total / data.meta.limit)
+                    filters.page! >=
+                    Math.ceil(paginationMeta.total / paginationMeta.limit)
                   }
                   className="px-4 py-2 border border-white/10 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#d5b47f]/40"
                 >
@@ -299,4 +314,3 @@ export default function LawyersPage() {
     </div>
   );
 }
-

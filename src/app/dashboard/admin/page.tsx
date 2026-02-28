@@ -6,8 +6,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Users, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { LawyerStatus } from '@/types';
+import type { Booking, LawyerProfile } from '@/types';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/error-message';
+import { asLawyerProfile, asUser } from '@/lib/type-guards';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -42,8 +44,8 @@ export default function AdminDashboard() {
       await api.approveLawyer(lawyerId);
       toast.success('Lawyer approved');
       refetchOverview();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to approve');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to approve'));
     }
   };
 
@@ -55,8 +57,8 @@ export default function AdminDashboard() {
       await api.rejectLawyer(lawyerId);
       toast.success('Lawyer rejected');
       refetchOverview();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to reject');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to reject'));
     }
   };
 
@@ -72,8 +74,9 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const pending = overview?.pending || [];
+  const pending: LawyerProfile[] = overview?.pending || [];
   const metrics = overview?.metrics || { total: 0, approved: 0, pending: 0 };
+  const recentBookings: Booking[] = bookings || [];
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
@@ -142,8 +145,8 @@ export default function AdminDashboard() {
               Pending Lawyer Approvals
             </h2>
             <div className="space-y-4">
-              {pending.map((lawyer: any) => {
-                const lawyerUser = lawyer.user as any;
+              {pending.map((lawyer) => {
+                const lawyerUser = asUser(lawyer.user);
                 return (
                   <div
                     key={lawyer._id}
@@ -213,10 +216,10 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {bookings.slice(0, 10).map((booking: any) => {
-                    const client = booking.client as any;
-                    const lawyer = booking.lawyer as any;
-                    const lawyerUser = lawyer?.user || {};
+                  {recentBookings.slice(0, 10).map((booking) => {
+                    const client = asUser(booking.client);
+                    const lawyer = asLawyerProfile(booking.lawyer);
+                    const lawyerUser = asUser(lawyer?.user);
                     return (
                       <tr key={booking._id} className="hover:bg-white/5">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -258,4 +261,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

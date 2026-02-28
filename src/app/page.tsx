@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Shield, Clock, Star, ArrowRight } from 'lucide-react';
+import { Search, Shield, Clock, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
