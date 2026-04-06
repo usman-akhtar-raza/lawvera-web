@@ -132,6 +132,59 @@ export interface OtpRequiredResponse {
 export type RegisterResponse = AuthResponse | OtpRequiredResponse;
 export type LoginResponse = AuthResponse | OtpRequiredResponse;
 
+export enum CaseStatus {
+  OPEN = 'open',
+  ASSIGNED = 'assigned',
+  IN_PROGRESS = 'in_progress',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed',
+}
+
+export enum CaseCategory {
+  CRIMINAL = 'criminal',
+  FAMILY = 'family',
+  PROPERTY = 'property',
+  CORPORATE = 'corporate',
+  IMMIGRATION = 'immigration',
+  TAX = 'tax',
+  CIVIL = 'civil',
+  LABOUR = 'labour',
+  CONSUMER = 'consumer',
+  OTHER = 'other',
+}
+
+export interface CaseActivityLog {
+  action: string;
+  actor: string | User;
+  note?: string;
+  createdAt: string;
+}
+
+export interface LegalCase {
+  _id: string;
+  title: string;
+  description: string;
+  category: CaseCategory;
+  status: CaseStatus;
+  client: string | User;
+  lawyer?: string | LawyerProfile;
+  resolutionSummary?: string;
+  resolvedAt?: string;
+  closedAt?: string;
+  activityLog: CaseActivityLog[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CaseAnalytics {
+  total: number;
+  open: number;
+  assigned: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+}
+
 export interface SearchLawyersParams {
   page?: number;
   limit?: number;

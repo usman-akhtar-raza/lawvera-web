@@ -12,6 +12,10 @@ import type {
   SearchLawyersParams,
   RegisterResponse,
   LoginResponse,
+  LegalCase,
+  CaseCategory,
+  CaseStatus,
+  CaseAnalytics,
 } from '@/types';
 import {
   clearTokens,
@@ -364,6 +368,59 @@ class ApiClient {
 
   async deleteLawSource(id: string): Promise<{ success: true }> {
     const response = await this.client.delete(`/law-sources/${id}`);
+    return response.data;
+  }
+
+  // Cases
+  async createCase(data: {
+    title: string;
+    description: string;
+    category: CaseCategory;
+  }): Promise<LegalCase> {
+    const response = await this.client.post('/cases', data);
+    return response.data;
+  }
+
+  async getClientCases(): Promise<LegalCase[]> {
+    const response = await this.client.get('/cases/client/me');
+    return response.data;
+  }
+
+  async getLawyerCases(): Promise<LegalCase[]> {
+    const response = await this.client.get('/cases/lawyer/me');
+    return response.data;
+  }
+
+  async getCaseById(id: string): Promise<LegalCase> {
+    const response = await this.client.get(`/cases/${id}`);
+    return response.data;
+  }
+
+  async assignLawyerToCase(
+    caseId: string,
+    lawyerId: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.patch(`/cases/${caseId}/assign`, {
+      lawyerId,
+    });
+    return response.data;
+  }
+
+  async updateCaseStatus(
+    caseId: string,
+    data: { status: CaseStatus; note?: string },
+  ): Promise<LegalCase> {
+    const response = await this.client.patch(`/cases/${caseId}/status`, data);
+    return response.data;
+  }
+
+  async getAllCases(): Promise<LegalCase[]> {
+    const response = await this.client.get('/cases/admin/all');
+    return response.data;
+  }
+
+  async getCaseAnalytics(): Promise<CaseAnalytics> {
+    const response = await this.client.get('/cases/admin/analytics');
     return response.data;
   }
 }

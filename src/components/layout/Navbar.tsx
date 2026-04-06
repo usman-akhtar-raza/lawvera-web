@@ -14,6 +14,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const isCasesRoute = pathname?.startsWith('/cases');
   const isDarkMode = theme === 'dark';
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo.svg';
   const navBackgroundClass = isDarkMode
@@ -74,6 +75,16 @@ export function Navbar() {
             </button>
             {isAuthenticated ? (
               <>
+                <Link
+                  href="/cases"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    isCasesRoute
+                      ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
+                      : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                  }`}
+                >
+                  Cases
+                </Link>
                 <Link
                   href={getDashboardLink()}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
@@ -172,6 +183,13 @@ export function Navbar() {
             </button>
             {isAuthenticated ? (
               <>
+                <Link
+                  href="/cases"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Cases
+                </Link>
                 <Link
                   href={getDashboardLink()}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}

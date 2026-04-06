@@ -22,6 +22,6 @@ const isLawyerProfile = (value: unknown): value is LawyerProfile =>
   typeof value.experienceYears === 'number' &&
   typeof value.consultationFee === 'number';
 
-export function asLawyerProfile(value: Booking['lawyer']): LawyerProfile | null {
+export function asLawyerProfile(value: Booking['lawyer'] | undefined): LawyerProfile | null {
   return isLawyerProfile(value) ? value : null;
 }
