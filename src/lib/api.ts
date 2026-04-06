@@ -10,6 +10,8 @@ import type {
   ChatSessionSummary,
   ChatAskResponse,
   SearchLawyersParams,
+  RegisterResponse,
+  LoginResponse,
 } from '@/types';
 import {
   clearTokens,
@@ -121,7 +123,7 @@ class ApiClient {
     password: string;
     city?: string;
     phone?: string;
-  }): Promise<AuthResponse> {
+  }): Promise<RegisterResponse> {
     const response = await this.client.post('/auth/register/client', data);
     return response.data;
   }
@@ -138,13 +140,23 @@ class ApiClient {
     description?: string;
     profilePhotoUrl?: string;
     availability: Array<{ day: string; slots: string[] }>;
-  }): Promise<AuthResponse> {
+  }): Promise<RegisterResponse> {
     const response = await this.client.post('/auth/register/lawyer', data);
     return response.data;
   }
 
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     const response = await this.client.post('/auth/login', { email, password });
+    return response.data;
+  }
+
+  async sendOtp(email: string): Promise<{ message: string; email: string }> {
+    const response = await this.client.post('/auth/send-otp', { email });
+    return response.data;
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<AuthResponse> {
+    const response = await this.client.post('/auth/verify-otp', { email, otp });
     return response.data;
   }
 

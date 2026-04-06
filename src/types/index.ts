@@ -123,6 +123,15 @@ export interface AuthResponse {
   profileStatus?: LawyerStatus;
 }
 
+export interface OtpRequiredResponse {
+  message: string;
+  email: string;
+  requiresVerification: true;
+}
+
+export type RegisterResponse = AuthResponse | OtpRequiredResponse;
+export type LoginResponse = AuthResponse | OtpRequiredResponse;
+
 export interface SearchLawyersParams {
   page?: number;
   limit?: number;

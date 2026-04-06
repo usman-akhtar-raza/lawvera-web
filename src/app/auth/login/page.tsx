@@ -29,13 +29,22 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await api.login(data.email, data.password);
-      setAuth(response.user, response.tokens, response.lawyerProfile);
-      toast.success('Login successful!');
-      const redirect =
-        (typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('redirect')
-          : null) || '/dashboard/client';
-      router.push(redirect);
+
+      if ('requiresVerification' in response && response.requiresVerification) {
+        toast('Please verify your email first.', { icon: '📧' });
+        router.push(`/auth/verify-otp?email=${encodeURIComponent(response.email)}`);
+        return;
+      }
+
+      if ('tokens' in response) {
+        setAuth(response.user, response.tokens, response.lawyerProfile);
+        toast.success('Login successful!');
+        const redirect =
+          (typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('redirect')
+            : null) || '/dashboard/client';
+        router.push(redirect);
+      }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Invalid email or password'));
     } finally {

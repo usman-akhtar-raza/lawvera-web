@@ -128,11 +128,20 @@ export default function LawyerRegisterPage() {
         ...registerData,
         availability,
       });
-      setAuth(response.user, response.tokens, response.lawyerProfile);
-      toast.success(
-        'Registration successful! Your profile is pending approval.',
-      );
-      router.push('/dashboard/lawyer');
+
+      if ('requiresVerification' in response && response.requiresVerification) {
+        toast.success('Registration successful! Please verify your email.');
+        router.push(`/auth/verify-otp?email=${encodeURIComponent(response.email)}`);
+        return;
+      }
+
+      if ('tokens' in response) {
+        setAuth(response.user, response.tokens, response.lawyerProfile);
+        toast.success(
+          'Registration successful! Your profile is pending approval.',
+        );
+        router.push('/dashboard/lawyer');
+      }
     } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Registration failed. Please try again.'),

@@ -49,7 +49,6 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       if (type === 'lawyer') {
-        // For lawyer registration, redirect to lawyer-specific form
         router.push('/auth/register/lawyer');
         return;
       }
@@ -62,9 +61,18 @@ export default function RegisterPage() {
         phone: data.phone,
       };
       const response = await api.registerClient(registerData);
-      setAuth(response.user, response.tokens);
-      toast.success('Registration successful!');
-      router.push('/dashboard/client');
+
+      if ('requiresVerification' in response && response.requiresVerification) {
+        toast.success('Registration successful! Please verify your email.');
+        router.push(`/auth/verify-otp?email=${encodeURIComponent(response.email)}`);
+        return;
+      }
+
+      if ('tokens' in response) {
+        setAuth(response.user, response.tokens);
+        toast.success('Registration successful!');
+        router.push('/dashboard/client');
+      }
     } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Registration failed. Please try again.'),
