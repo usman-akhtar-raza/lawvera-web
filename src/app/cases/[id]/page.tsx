@@ -10,18 +10,18 @@ import {
   User as UserIcon,
   Briefcase,
   CheckCircle,
-  AlertCircle,
   Play,
   XCircle,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { CaseStatus, UserRole } from '@/types';
-import type { LegalCase, LawyerProfile } from '@/types';
+import type { LawyerProfile } from '@/types';
 import { format } from 'date-fns';
 import { asUser, asLawyerProfile } from '@/lib/type-guards';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
+import { CaseCommunicationPanel } from '@/components/communication/CaseCommunicationPanel';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: string }> = {
   [CaseStatus.OPEN]: { label: 'Open', color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -249,6 +249,11 @@ export default function CaseDetailPage() {
             </div>
           </div>
         )}
+
+        <CaseCommunicationPanel
+          caseId={caseId}
+          isEnabled={Boolean(lawyerUser)}
+        />
 
         {/* Activity Log */}
         <div className="brand-card p-6">

@@ -9,6 +9,9 @@ import type {
   ChatMessage,
   ChatSessionSummary,
   ChatAskResponse,
+  CaseCommunicationMessage,
+  CaseCommunicationPayload,
+  CaseCommunicationThreadSummary,
   SearchLawyersParams,
   RegisterResponse,
   LoginResponse,
@@ -296,6 +299,35 @@ class ApiClient {
     sessionId: string,
   ): Promise<{ sessionId: string; deleted: number }> {
     const response = await this.client.delete(`/chat/sessions/${sessionId}`);
+    return response.data;
+  }
+
+  // Communication Chat (Client <-> Lawyer)
+  async getCommunicationThreads(): Promise<CaseCommunicationThreadSummary[]> {
+    const response = await this.client.get('/communication/threads');
+    return response.data;
+  }
+
+  async getCaseCommunication(caseId: string): Promise<CaseCommunicationPayload> {
+    const response = await this.client.get(`/communication/cases/${caseId}/messages`);
+    return response.data;
+  }
+
+  async sendCaseMessage(
+    caseId: string,
+    payload: { content: string },
+  ): Promise<CaseCommunicationMessage> {
+    const response = await this.client.post(
+      `/communication/cases/${caseId}/messages`,
+      payload,
+    );
+    return response.data;
+  }
+
+  async markCaseMessagesRead(
+    caseId: string,
+  ): Promise<{ marked: number; unreadCount: number }> {
+    const response = await this.client.post(`/communication/cases/${caseId}/read`);
     return response.data;
   }
 

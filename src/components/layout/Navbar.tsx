@@ -86,6 +86,16 @@ export function Navbar() {
                   Cases
                 </Link>
                 <Link
+                  href="/communication"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    pathname?.startsWith('/communication')
+                      ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
+                      : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                  }`}
+                >
+                  Communication
+                </Link>
+                <Link
                   href={getDashboardLink()}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
                     pathname?.startsWith('/dashboard')
@@ -189,6 +199,13 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Cases
+                </Link>
+                <Link
+                  href="/communication"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Communication
                 </Link>
                 <Link
                   href={getDashboardLink()}

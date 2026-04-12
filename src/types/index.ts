@@ -111,6 +111,35 @@ export interface ChatSessionSummary {
   messageCount?: number;
 }
 
+export interface CaseCommunicationMessage {
+  _id: string;
+  threadId: string;
+  caseId: string;
+  sender: string | User;
+  content: string;
+  readBy: string[];
+  createdAt: string;
+}
+
+export interface CaseCommunicationPayload {
+  threadId: string | null;
+  caseId: string;
+  participants: User[];
+  unreadCount: number;
+  messages: CaseCommunicationMessage[];
+}
+
+export interface CaseCommunicationThreadSummary {
+  threadId: string;
+  caseId: string;
+  caseTitle: string;
+  caseStatus: CaseStatus;
+  participants: User[];
+  lastMessagePreview: string;
+  lastMessageAt: string;
+  unreadCount: number;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
