@@ -167,6 +167,37 @@ class ApiClient {
     return response.data;
   }
 
+  async applyAsLawyer(data: {
+    specialization: string;
+    experienceYears: number;
+    city: string;
+    consultationFee: number;
+    education?: string;
+    description?: string;
+    profilePhotoUrl?: string;
+    availability: Array<{ day: string; slots: string[] }>;
+  }): Promise<AuthResponse> {
+    // Step 1: create the lawyer profile and upgrade the user's role in the DB
+    const applyRes = await this.client.post('/lawyers/apply', data);
+    const { lawyerProfile } = applyRes.data as { user: unknown; lawyerProfile: LawyerProfile };
+
+    // Step 2: refresh tokens so the JWT carries the new "lawyer" role
+    const refreshToken = getRefreshToken();
+    const refreshRes = await this.client.post('/auth/refresh', { refreshToken });
+    const { user, tokens } = refreshRes.data as AuthResponse;
+
+    return { user, tokens, lawyerProfile };
+  }
+
+  async revertToClient(): Promise<AuthResponse> {
+    // Step 1: revert role in DB (LawyerProfile kept intact)
+    await this.client.post('/lawyers/revert-to-client');
+    // Step 2: refresh tokens so JWT carries the new "client" role
+    const refreshToken = getRefreshToken();
+    const refreshRes = await this.client.post('/auth/refresh', { refreshToken });
+    return refreshRes.data as AuthResponse;
+  }
+
   async getProfile(): Promise<User & { lawyerProfile?: LawyerProfile }> {
     const response = await this.client.get('/auth/me');
     return response.data;

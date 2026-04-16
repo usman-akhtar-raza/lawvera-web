@@ -169,6 +169,20 @@ export default function LawyerRegisterPage() {
         </div>
 
         <div className="brand-card p-8">
+          <div className="mb-6 flex gap-2">
+            <Link
+              href="/auth/register"
+              className="flex-1 text-center py-2 rounded-lg border bg-white/5 text-[var(--text-secondary)] border-white/10"
+            >
+              User
+            </Link>
+            <Link
+              href="/auth/register/lawyer"
+              className="flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent"
+            >
+              Lawyer
+            </Link>
+          </div>
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

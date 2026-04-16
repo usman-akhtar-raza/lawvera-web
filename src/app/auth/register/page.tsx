@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -20,7 +20,6 @@ interface RegisterForm {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [type, setType] = useState<'client' | 'lawyer'>('client');
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -32,14 +31,6 @@ export default function RegisterPage() {
 
   const password = watch('password');
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const queryType = new URLSearchParams(window.location.search).get('type');
-    setType(queryType === 'lawyer' ? 'lawyer' : 'client');
-  }, []);
-
   const onSubmit = async (data: RegisterForm) => {
     if (data.password !== data.confirmPassword) {
       toast.error('Passwords do not match');
@@ -48,11 +39,6 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      if (type === 'lawyer') {
-        router.push('/auth/register/lawyer');
-        return;
-      }
-
       const registerData = {
         name: data.name,
         email: data.email,
@@ -103,19 +89,13 @@ export default function RegisterPage() {
           <div className="mb-6 flex gap-2">
             <Link
               href="/auth/register"
-              className={`flex-1 text-center py-2 rounded-lg border ${type !== 'lawyer'
-                  ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1f1508] border-transparent'
-                  : 'bg-white/5 text-[var(--text-secondary)] border-white/10'
-                }`}
+              className="flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1f1508] border-transparent"
             >
               User
             </Link>
             <Link
-              href="/auth/register?type=lawyer"
-              className={`flex-1 text-center py-2 rounded-lg border ${type === 'lawyer'
-                  ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
-                  : 'bg-white/5 text-[var(--text-secondary)] border-white/10'
-                }`}
+              href="/auth/register/lawyer"
+              className="flex-1 text-center py-2 rounded-lg border bg-white/5 text-[var(--text-secondary)] border-white/10"
             >
               Lawyer
             </Link>
