@@ -19,6 +19,7 @@ import type {
   CaseCategory,
   CaseStatus,
   CaseAnalytics,
+  SearchCaseFeedParams,
 } from '@/types';
 import {
   clearTokens,
@@ -454,6 +455,13 @@ class ApiClient {
     return response.data;
   }
 
+  async getLawyerCaseFeed(
+    params: SearchCaseFeedParams = {},
+  ): Promise<LegalCase[]> {
+    const response = await this.client.get('/cases/lawyer/feed', { params });
+    return response.data;
+  }
+
   async getCaseById(id: string): Promise<LegalCase> {
     const response = await this.client.get(`/cases/${id}`);
     return response.data;
@@ -466,6 +474,24 @@ class ApiClient {
     const response = await this.client.patch(`/cases/${caseId}/assign`, {
       lawyerId,
     });
+    return response.data;
+  }
+
+  async requestCase(
+    caseId: string,
+    data: { message?: string } = {},
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/requests`, data);
+    return response.data;
+  }
+
+  async acceptCaseRequest(
+    caseId: string,
+    lawyerId: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.patch(
+      `/cases/${caseId}/requests/${lawyerId}/accept`,
+    );
     return response.data;
   }
 

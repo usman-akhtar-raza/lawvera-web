@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { CaseStatus, UserRole } from '@/types';
-import type { LawyerProfile } from '@/types';
+import { CaseRequestStatus, CaseStatus, UserRole } from '@/types';
+import type { CaseLawyerRequest, LawyerProfile } from '@/types';
 import { format } from 'date-fns';
 import { asUser, asLawyerProfile } from '@/lib/type-guards';
 import toast from 'react-hot-toast';
@@ -40,15 +40,27 @@ function StatusBadge({ status }: { status: CaseStatus }) {
   );
 }
 
+function getLawyerId(lawyer: CaseLawyerRequest['lawyer']) {
+  return typeof lawyer === 'string' ? lawyer : lawyer._id;
+}
+
+function getRequestLabel(status: CaseRequestStatus) {
+  if (status === CaseRequestStatus.ACCEPTED) return 'Accepted';
+  if (status === CaseRequestStatus.REJECTED) return 'Not selected';
+  return 'Pending';
+}
+
 export default function CaseDetailPage() {
   const router = useRouter();
   const params = useParams();
   const caseId = params.id as string;
-  const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const { user, lawyerProfile, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const [resolutionNote, setResolutionNote] = useState('');
+  const [requestMessage, setRequestMessage] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -81,6 +93,40 @@ export default function CaseDetailPage() {
     }
   };
 
+  const handleRequestCase = async () => {
+    setActionLoading('request');
+    try {
+      await api.requestCase(caseId, {
+        message: requestMessage.trim() || undefined,
+      });
+      toast.success('Request sent to the client');
+      setShowRequestModal(false);
+      setRequestMessage('');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to send request'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAcceptRequest = async (request: CaseLawyerRequest) => {
+    const requestLawyer = asLawyerProfile(request.lawyer);
+    const lawyerId = getLawyerId(request.lawyer);
+    const lawyerUser = asUser(requestLawyer?.user);
+
+    setActionLoading(`accept-${lawyerId}`);
+    try {
+      await api.acceptCaseRequest(caseId, lawyerId);
+      toast.success(`${lawyerUser?.name || 'Lawyer'} selected for this case`);
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to select lawyer'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
@@ -97,6 +143,18 @@ export default function CaseDetailPage() {
   const lawyer = asLawyerProfile(legalCase.lawyer);
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);
+  const lawyerRequests = legalCase.lawyerRequests || [];
+  const currentLawyerRequest = lawyerRequests.find((request) => {
+    const requestLawyer = asLawyerProfile(request.lawyer);
+    const requestLawyerUser = asUser(requestLawyer?.user);
+
+    if (lawyerProfile && getLawyerId(request.lawyer) === lawyerProfile._id) {
+      return true;
+    }
+
+    return Boolean(user?._id && requestLawyerUser?._id === user._id);
+  });
+  const isOpenForRequests = legalCase.status === CaseStatus.OPEN && !lawyer;
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
@@ -168,12 +226,22 @@ export default function CaseDetailPage() {
             ) : (
               <div>
                 <p className="text-[var(--text-muted)] mb-2">No lawyer assigned yet</p>
-                {(isClient || isAdmin) && legalCase.status === CaseStatus.OPEN && (
+                {isClient && legalCase.status === CaseStatus.OPEN && (
+                  <p className="text-xs text-[var(--text-muted)]">
+                    This case is live. Lawyers can send requests for you to review.
+                  </p>
+                )}
+                {isLawyer && isOpenForRequests && (
+                  <p className="text-xs text-[var(--text-muted)]">
+                    This case is open for lawyer requests.
+                  </p>
+                )}
+                {isAdmin && legalCase.status === CaseStatus.OPEN && (
                   <button
                     onClick={() => setShowAssignModal(true)}
                     className="text-sm font-medium text-[#d5b47f] hover:text-[#f3e2c1]"
                   >
-                    Assign a Lawyer
+                    Assign directly
                   </button>
                 )}
               </div>
@@ -186,6 +254,28 @@ export default function CaseDetailPage() {
           <div className="brand-card p-6 mb-6">
             <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-4">Actions</h3>
             <div className="flex flex-wrap gap-3">
+              {/* Lawyer: request live open case */}
+              {isLawyer && isOpenForRequests && (
+                currentLawyerRequest ? (
+                  <button
+                    disabled
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-[var(--text-muted)] border border-white/10"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    {getRequestLabel(currentLawyerRequest.status)}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowRequestModal(true)}
+                    disabled={actionLoading !== null}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#d5b47f]/20 text-[#d5b47f] border border-[#d5b47f]/30 hover:bg-[#d5b47f]/30 disabled:opacity-50"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    Request This Case
+                  </button>
+                )
+              )}
+
               {/* Lawyer: Start working */}
               {isLawyer && legalCase.status === CaseStatus.ASSIGNED && (
                 <button
@@ -236,7 +326,7 @@ export default function CaseDetailPage() {
                 )}
 
               {/* Client/Admin: Assign lawyer (open or re-assign) */}
-              {(isClient || isAdmin) &&
+              {isAdmin &&
                 [CaseStatus.OPEN, CaseStatus.ASSIGNED].includes(legalCase.status) && (
                   <button
                     onClick={() => setShowAssignModal(true)}
@@ -247,6 +337,73 @@ export default function CaseDetailPage() {
                   </button>
                 )}
             </div>
+          </div>
+        )}
+
+        {(isClient || isAdmin) && !lawyer && legalCase.status === CaseStatus.OPEN && (
+          <div className="brand-card p-6 mb-6">
+            <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-4">
+              Lawyer Requests
+            </h3>
+            {lawyerRequests.length > 0 ? (
+              <div className="space-y-3">
+                {lawyerRequests.map((request) => {
+                  const requestLawyer = asLawyerProfile(request.lawyer);
+                  const requestLawyerUser = asUser(requestLawyer?.user);
+                  const lawyerId = getLawyerId(request.lawyer);
+                  const isPending = request.status === CaseRequestStatus.PENDING;
+
+                  return (
+                    <div
+                      key={lawyerId}
+                      className="border border-white/10 rounded-lg p-4 bg-white/5"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold">
+                              {requestLawyerUser?.name || 'Lawyer'}
+                            </p>
+                            <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs text-[var(--text-muted)]">
+                              {getRequestLabel(request.status)}
+                            </span>
+                          </div>
+                          {requestLawyer && (
+                            <p className="text-sm text-[var(--text-muted)] mt-1">
+                              {requestLawyer.specialization} | {requestLawyer.city} |{' '}
+                              {requestLawyer.experienceYears}y exp
+                            </p>
+                          )}
+                          {request.message && (
+                            <p className="text-sm text-[var(--text-secondary)] mt-3">
+                              {request.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-[var(--text-muted)] mt-2">
+                            Requested {format(new Date(request.createdAt), 'MMM d, yyyy h:mm a')}
+                          </p>
+                        </div>
+                        {isPending && (
+                          <button
+                            onClick={() => handleAcceptRequest(request)}
+                            disabled={actionLoading !== null}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] disabled:opacity-50"
+                          >
+                            {actionLoading === `accept-${lawyerId}`
+                              ? 'Selecting...'
+                              : 'Select Lawyer'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[var(--text-muted)]">
+                No lawyer requests yet. This case is live and visible to approved lawyers.
+              </p>
+            )}
           </div>
         )}
 
@@ -312,6 +469,38 @@ export default function CaseDetailPage() {
               refetch();
             }}
           />
+        )}
+
+        {/* Lawyer Request Modal */}
+        {showRequestModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="brand-card p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-semibold mb-4">Request This Case</h3>
+              <textarea
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                rows={4}
+                maxLength={1000}
+                placeholder="Add a short note for the client..."
+                className="w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#d5b47f] text-sm mb-4"
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowRequestModal(false)}
+                  className="px-4 py-2 rounded-lg text-sm border border-white/10 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRequestCase}
+                  disabled={actionLoading !== null}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] disabled:opacity-50"
+                >
+                  {actionLoading === 'request' ? 'Sending...' : 'Send Request'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Resolve Modal */}

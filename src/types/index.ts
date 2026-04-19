@@ -169,6 +169,12 @@ export enum CaseStatus {
   CLOSED = 'closed',
 }
 
+export enum CaseRequestStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+}
+
 export enum CaseCategory {
   CRIMINAL = 'criminal',
   FAMILY = 'family',
@@ -189,6 +195,14 @@ export interface CaseActivityLog {
   createdAt: string;
 }
 
+export interface CaseLawyerRequest {
+  lawyer: string | LawyerProfile;
+  message?: string;
+  status: CaseRequestStatus;
+  createdAt: string;
+  respondedAt?: string;
+}
+
 export interface LegalCase {
   _id: string;
   title: string;
@@ -197,6 +211,7 @@ export interface LegalCase {
   status: CaseStatus;
   client: string | User;
   lawyer?: string | LawyerProfile;
+  lawyerRequests?: CaseLawyerRequest[];
   resolutionSummary?: string;
   resolvedAt?: string;
   closedAt?: string;
@@ -225,6 +240,11 @@ export interface SearchLawyersParams {
   minRating?: number;
   availability?: 'today' | 'tomorrow';
   search?: string; // For frontend filtering only
+}
+
+export interface SearchCaseFeedParams {
+  search?: string;
+  category?: CaseCategory;
 }
 
 export interface PaginatedResponse<T> {

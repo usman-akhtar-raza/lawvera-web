@@ -15,6 +15,8 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const isCasesRoute = pathname?.startsWith('/cases');
+  const isFeedRoute = pathname?.startsWith('/feed');
+  const isLawyer = user?.role === UserRole.LAWYER;
   const isDarkMode = theme === 'dark';
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo.svg';
   const navBackgroundClass = isDarkMode
@@ -85,6 +87,18 @@ export function Navbar() {
                 >
                   Cases
                 </Link>
+                {isLawyer && (
+                  <Link
+                    href="/feed"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      isFeedRoute
+                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
+                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                    }`}
+                  >
+                    Feed
+                  </Link>
+                )}
                 <Link
                   href="/communication"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
@@ -200,6 +214,15 @@ export function Navbar() {
                 >
                   Cases
                 </Link>
+                {isLawyer && (
+                  <Link
+                    href="/feed"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Feed
+                  </Link>
+                )}
                 <Link
                   href="/communication"
                   className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}

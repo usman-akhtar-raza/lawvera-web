@@ -55,7 +55,7 @@ export default function CreateCasePage() {
     setIsSubmitting(true);
     try {
       const created = await api.createCase(data);
-      toast.success('Case created successfully!');
+      toast.success('Case created and live for lawyer requests!');
       router.push(`/cases/${created._id}`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to create case'));
@@ -87,7 +87,8 @@ export default function CreateCasePage() {
 
         <h1 className="text-3xl font-bold mb-2">Create New Case</h1>
         <p className="text-[var(--text-secondary)] mb-8">
-          Describe your legal issue and we will help you get the right assistance.
+          Describe your legal issue. Once submitted, approved lawyers can request
+          the case and you can select who to work with.
         </p>
 
         <div className="brand-card p-8">

@@ -80,7 +80,7 @@ export default function CasesPage() {
               {isAdmin
                 ? 'All platform cases'
                 : isLawyer
-                  ? 'Cases assigned to you'
+                  ? 'Manage your assigned cases'
                   : 'Track and manage your legal cases'}
             </p>
           </div>
@@ -134,7 +134,9 @@ export default function CasesPage() {
 
         {/* Active Cases */}
         <div className="brand-card p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Active Cases</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {isLawyer ? 'My Assigned Cases' : 'Active Cases'}
+          </h2>
           {active.length > 0 ? (
             <div className="space-y-4">
               {active.map((c: LegalCase) => (
@@ -182,6 +184,7 @@ function CaseCard({
   const client = asUser(legalCase.client);
   const isLawyer = userRole === UserRole.LAWYER;
   const isAdmin = userRole === UserRole.ADMIN;
+  const isLiveOpenCase = isLawyer && legalCase.status === CaseStatus.OPEN && !lawyer;
 
   return (
     <Link
@@ -203,6 +206,9 @@ function CaseCard({
           <div className="flex items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
             {isLawyer && client && (
               <span>Client: {client.name}</span>
+            )}
+            {isLiveOpenCase && (
+              <span>Live case: accepting lawyer requests</span>
             )}
             {!isLawyer && lawyerUser && (
               <span>Lawyer: {lawyerUser.name}</span>
