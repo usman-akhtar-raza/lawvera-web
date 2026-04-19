@@ -23,20 +23,18 @@ const decodeAccessTokenExpiry = (token: string): number | null => {
   }
 };
 
+// Cookie lives for 7 days (matches refresh token lifetime).
+// Access token expiry is enforced by the API (401 → interceptor refreshes).
+// Using the short JWT expiry here caused the cookie to vanish mid-session,
+// which made the middleware redirect to login even though a valid refresh
+// token was still available in localStorage.
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
+
 const setAccessTokenCookie = (accessToken: string) => {
   if (!isBrowser()) {
     return;
   }
-
-  const expiresAt = decodeAccessTokenExpiry(accessToken);
-  const maxAge =
-    expiresAt && expiresAt * 1000 > Date.now()
-      ? Math.floor(expiresAt - Date.now() / 1000)
-      : undefined;
-
-  const maxAgeSegment =
-    typeof maxAge === 'number' && maxAge > 0 ? `; Max-Age=${maxAge}` : '';
-  document.cookie = `${ACCESS_TOKEN_COOKIE_NAME}=${encodeURIComponent(accessToken)}; Path=/; SameSite=Lax${maxAgeSegment}`;
+  document.cookie = `${ACCESS_TOKEN_COOKIE_NAME}=${encodeURIComponent(accessToken)}; Path=/; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`;
 };
 
 export const setTokens = (tokens: AuthTokens) => {

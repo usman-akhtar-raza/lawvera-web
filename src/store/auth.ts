@@ -15,6 +15,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   setLawyerProfile: (profile: LawyerProfile | null) => void;
   checkAuth: () => Promise<void>;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,8 +24,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       tokens: null,
       lawyerProfile: null,
-      isLoading: false,
+      isLoading: true,
       isAuthenticated: false,
+
+      setHasHydrated: (value) => set({ isLoading: !value }),
 
       setAuth: (user, tokens, lawyerProfile) => {
         setTokens(tokens);
@@ -92,6 +95,9 @@ export const useAuthStore = create<AuthState>()(
         if (state?.tokens) {
           setTokens(state.tokens);
         }
+        // Mark hydration done — isLoading was true by default so every
+        // page waits here before running auth redirect checks.
+        state?.setHasHydrated(true);
       },
     },
   ),

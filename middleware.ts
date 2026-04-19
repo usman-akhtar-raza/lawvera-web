@@ -83,9 +83,11 @@ export function middleware(request: NextRequest) {
     return redirectToLogin(request, true);
   }
 
-  if (typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now()) {
-    return redirectToLogin(request, true);
-  }
+  // Expired tokens are intentionally allowed through here.
+  // The cookie is kept alive for 7 days (refresh token lifetime) so the
+  // client-side axios interceptor can silently exchange the expired access
+  // token for a fresh one on the first API call. Redirecting on expiry here
+  // would beat the interceptor to it and send the user to login unnecessarily.
 
   if (pathname === '/profile') {
     return NextResponse.next();
