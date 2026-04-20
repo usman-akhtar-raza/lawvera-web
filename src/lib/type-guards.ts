@@ -6,9 +6,7 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 const isUser = (value: unknown): value is User =>
   isObject(value) &&
   typeof value._id === 'string' &&
-  typeof value.name === 'string' &&
-  typeof value.email === 'string' &&
-  typeof value.role === 'string';
+  typeof value.name === 'string';
 
 export function asUser(value: unknown): User | null {
   return isUser(value) ? value : null;

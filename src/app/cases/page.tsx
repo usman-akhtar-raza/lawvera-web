@@ -203,18 +203,30 @@ function CaseCard({
           <p className="text-sm text-[var(--text-muted)] line-clamp-2">
             {legalCase.description}
           </p>
-          <div className="flex items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
             {isLawyer && client && (
               <span>Client: {client.name}</span>
+            )}
+            {isLawyer && (
+              <span>Assigned lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
             )}
             {isLiveOpenCase && (
               <span>Live case: accepting lawyer requests</span>
             )}
-            {!isLawyer && lawyerUser && (
+            {!isLawyer && !isAdmin && (
+              <span>Lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
+            )}
+            {!isLawyer && !isAdmin && lawyer?.specialization && (
+              <span>Specialization: {lawyer.specialization}</span>
+            )}
+            {isAdmin && lawyerUser && (
               <span>Lawyer: {lawyerUser.name}</span>
             )}
             {isAdmin && client && (
               <span>Client: {client.name}</span>
+            )}
+            {isAdmin && lawyer?.specialization && (
+              <span>Specialization: {lawyer.specialization}</span>
             )}
             {legalCase.createdAt && (
               <span className="flex items-center gap-1">
