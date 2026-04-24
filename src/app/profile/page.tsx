@@ -443,7 +443,7 @@ export default function ProfileSettingsPage() {
                       <span><span className="text-[var(--text-muted)]">Specialization: </span>{lawyerProfile.specialization}</span>
                       <span><span className="text-[var(--text-muted)]">Experience: </span>{lawyerProfile.experienceYears} yrs</span>
                       <span><span className="text-[var(--text-muted)]">City: </span>{lawyerProfile.city}</span>
-                      <span><span className="text-[var(--text-muted)]">Fee: </span>${lawyerProfile.consultationFee}</span>
+                      <span><span className="text-[var(--text-muted)]">Fee: </span>PKR {lawyerProfile.consultationFee.toLocaleString()}</span>
                     </div>
                   )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#f9f0e2] text-[#8a5f2c] border border-[#d5b47f]/30">

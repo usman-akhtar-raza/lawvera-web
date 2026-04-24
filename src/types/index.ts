@@ -5,10 +5,19 @@ export enum UserRole {
 }
 
 export enum BookingStatus {
+  AWAITING_PAYMENT = 'awaiting_payment',
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  SUCCEEDED = 'succeeded',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
 }
 
 export enum LawyerStatus {
@@ -65,13 +74,32 @@ export interface Booking {
   _id: string;
   client: string | User;
   lawyer: string | LawyerProfile;
+  consultationFee: number;
   slotDate: string;
   slotTime: string;
   status: BookingStatus;
   reason?: string;
   notes?: string;
+  payment: {
+    provider: string;
+    status: PaymentStatus;
+    amountMinor: number;
+    currency: string;
+    txnRefNo: string;
+    responseCode?: string;
+    responseMessage?: string;
+    paidAt?: string;
+    failedAt?: string;
+    expiresAt?: string;
+  };
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface BookingCheckoutSession {
+  bookingId: string;
+  redirectUrl: string;
+  expiresAt: string;
 }
 
 export interface ChatMessage {

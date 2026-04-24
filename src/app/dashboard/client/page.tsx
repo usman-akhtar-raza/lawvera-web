@@ -58,6 +58,9 @@ export default function ClientDashboard() {
       b.status === BookingStatus.CONFIRMED &&
       new Date(b.slotDate) >= new Date(),
   ) || [];
+  const awaitingPayment = bookings?.filter(
+    (b) => b.status === BookingStatus.AWAITING_PAYMENT,
+  ) || [];
   const past = bookings?.filter(
     (b) =>
       b.status === BookingStatus.COMPLETED ||
@@ -112,6 +115,53 @@ export default function ClientDashboard() {
             </div>
           </div>
         </div>
+
+        {awaitingPayment.length > 0 && (
+          <div className="brand-card p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Payments In Progress</h2>
+            <div className="space-y-4">
+              {awaitingPayment.map((booking) => {
+                const lawyer = asLawyerProfile(booking.lawyer);
+                const lawyerUser = asUser(lawyer?.user);
+                return (
+                  <div
+                    key={booking._id}
+                    className="border border-[#d5b47f]/30 rounded-lg p-4 bg-[var(--brand-accent-soft)]"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {lawyerUser?.name || 'Lawyer'}
+                        </h3>
+                        <p className="text-[var(--text-secondary)]">
+                          Awaiting JazzCash confirmation
+                        </p>
+                        <p className="text-sm text-[var(--text-muted)] mt-1">
+                          {format(new Date(booking.slotDate), 'EEEE, MMMM d, yyyy')}{' '}
+                          at {booking.slotTime}
+                        </p>
+                        <p className="text-sm text-[var(--text-secondary)] mt-2">
+                          Payment status: {booking.payment.status}
+                        </p>
+                        {booking.payment.responseMessage && (
+                          <p className="text-sm text-[var(--text-muted)] mt-1">
+                            {booking.payment.responseMessage}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleCancel(booking._id)}
+                        className="px-4 py-2 rounded-lg text-[#a23a4c] border border-[#ff8c8c]/40 hover:bg-[#fde8ed] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {pending.length > 0 && (
           <div className="brand-card p-6 mb-8">
@@ -225,6 +275,8 @@ export default function ClientDashboard() {
                         className={`inline-block mt-2 px-3 py-1 rounded-full text-sm ${
                           booking.status === BookingStatus.COMPLETED
                             ? 'bg-[#e2f4ed] text-[#1f3d36]'
+                            : booking.status === BookingStatus.AWAITING_PAYMENT
+                              ? 'bg-[#f9f0e2] text-[#8a5f2c]'
                             : 'bg-white/10 text-[var(--text-secondary)]'
                         }`}
                       >

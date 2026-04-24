@@ -5,6 +5,7 @@ import type {
   LawyerProfile,
   Booking,
   BookingStatus,
+  BookingCheckoutSession,
   PaginatedResponse,
   ChatMessage,
   ChatSessionSummary,
@@ -269,8 +270,13 @@ class ApiClient {
     slotTime: string;
     reason?: string;
     notes?: string;
-  }): Promise<Booking> {
+  }): Promise<BookingCheckoutSession> {
     const response = await this.client.post('/bookings', data);
+    return response.data;
+  }
+
+  async getBookingPaymentStatus(bookingId: string): Promise<Booking> {
+    const response = await this.client.get(`/bookings/${bookingId}/payment-status`);
     return response.data;
   }
 

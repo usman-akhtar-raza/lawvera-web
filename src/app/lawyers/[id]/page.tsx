@@ -8,7 +8,6 @@ import {
   Star,
   MapPin,
   Briefcase,
-  DollarSign,
   Calendar,
   GraduationCap,
   MessageSquare,
@@ -123,8 +122,7 @@ export default function LawyerDetailPage() {
                     {lawyer.experienceYears} years experience
                   </div>
                   <div className="flex items-center justify-center">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    ${lawyer.consultationFee} consultation fee
+                    PKR {lawyer.consultationFee.toLocaleString()} consultation fee
                   </div>
                 </div>
                 <button
@@ -137,7 +135,7 @@ export default function LawyerDetailPage() {
                   }}
                   className="w-full bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] text-[#1b1205] py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#d5b47f]/40 transition-all"
                 >
-                  Book Appointment
+                  Book & Pay Securely
                 </button>
               </div>
             </div>

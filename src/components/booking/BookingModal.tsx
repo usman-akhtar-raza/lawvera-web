@@ -30,6 +30,10 @@ export function BookingModal({
 
   if (!isOpen) return null;
 
+  const formattedFee = new Intl.NumberFormat('en-PK', {
+    maximumFractionDigits: 2,
+  }).format(lawyer.consultationFee);
+
   const getAvailableDates = () => {
     const dates: Date[] = [];
     const today = startOfDay(new Date());
@@ -62,18 +66,15 @@ export function BookingModal({
 
     setIsSubmitting(true);
     try {
-      await api.createBooking({
+      const session = await api.createBooking({
         lawyerId: lawyer._id,
         slotDate: selectedDate.toISOString(),
         slotTime: selectedTime,
         reason,
       });
-      toast.success('Appointment booked successfully!');
+      toast.success('Redirecting to JazzCash...');
       onSuccess?.();
-      onClose();
-      setSelectedDate(null);
-      setSelectedTime('');
-      setReason('');
+      window.location.assign(session.redirectUrl);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to book appointment'));
     } finally {
@@ -97,6 +98,15 @@ export function BookingModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 text-[var(--text-primary)]">
+          <div className="rounded-2xl border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-4 py-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              Consultation fee: PKR {formattedFee}
+            </p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              Payment is completed on JazzCash before the appointment request is sent to the lawyer.
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Select Date
@@ -193,7 +203,7 @@ export function BookingModal({
               disabled={!selectedDate || !selectedTime || isSubmitting}
               className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isSubmitting ? 'Booking...' : 'Book Appointment'}
+              {isSubmitting ? 'Redirecting...' : 'Continue to JazzCash'}
             </button>
           </div>
         </form>

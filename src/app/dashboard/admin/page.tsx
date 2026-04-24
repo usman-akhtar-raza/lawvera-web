@@ -447,6 +447,8 @@ export default function AdminDashboard() {
                             className={`px-2 py-1 rounded-full text-xs font-semibold ${
                               booking.status === 'confirmed'
                                 ? 'bg-[#e2f4ed] text-[#1f3d36]'
+                                : booking.status === 'awaiting_payment'
+                                  ? 'bg-[#f9f0e2] text-[#8a5f2c]'
                                 : booking.status === 'pending'
                                   ? 'bg-[#f9f0e2] text-[#8a5f2c]'
                                   : booking.status === 'completed'

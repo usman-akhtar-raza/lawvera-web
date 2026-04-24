@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, MapPin, Briefcase, DollarSign } from 'lucide-react';
+import { Star, MapPin, Briefcase } from 'lucide-react';
 import type { LawyerProfile } from '@/types';
 
 interface LawyerCardProps {
@@ -56,8 +56,10 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center text-lg font-bold text-[var(--text-primary)]">
-                <DollarSign className="h-5 w-5 text-[#46d3a1]" />
-                <span>{lawyer.consultationFee}</span>
+                <span className="mr-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#46d3a1]">
+                  PKR
+                </span>
+                <span>{lawyer.consultationFee.toLocaleString()}</span>
               </div>
               <span className="text-[#d5b47f] font-medium hover:text-[#f3e2c1]">
                 View Profile →
