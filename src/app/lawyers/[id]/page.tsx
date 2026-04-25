@@ -165,11 +165,11 @@ export default function LawyerDetailPage() {
                   <Calendar className="h-5 w-5 mr-2" />
                   Availability
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="lawyer-timetable grid grid-cols-1 md:grid-cols-2 gap-4">
                   {lawyer.availability.map((slot) => (
                     <div
                       key={slot.day}
-                      className="border border-white/10 rounded-lg p-4"
+                      className="border border-white/10 rounded-lg p-4 bg-white/5"
                     >
                       <h4 className="font-semibold text-[var(--text-primary)] mb-2">
                         {slot.day}
@@ -179,7 +179,7 @@ export default function LawyerDetailPage() {
                           {slot.slots.map((time) => (
                             <span
                               key={time}
-                              className="px-3 py-1 rounded text-sm bg-white/5 border border-white/10 text-[var(--text-secondary)]"
+                              className="lawyer-timetable-muted px-3 py-1 rounded text-sm bg-[var(--surface-elevated)] border border-white/10"
                             >
                               {time}
                             </span>

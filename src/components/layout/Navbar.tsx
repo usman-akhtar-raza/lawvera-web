@@ -170,7 +170,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-4 py-2 rounded-md text-sm font-semibold text-[#01030c] bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] shadow-lg shadow-[#d5b47f]/20 hover:shadow-[#d5b47f]/40 transition-all"
+                  className="navbar-signup-button px-4 py-2 rounded-md text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] shadow-lg shadow-[#d5b47f]/20 hover:shadow-[#d5b47f]/40 transition-all"
                 >
                   Sign Up
                 </Link>
@@ -287,7 +287,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="block px-3 py-2 rounded-md text-base font-semibold text-[#1b1408] bg-gradient-to-r from-[#f7e4c6] via-[#ebcca0] to-[#d5b47f]"
+                  className="navbar-signup-button block px-3 py-2 rounded-md text-base font-semibold bg-gradient-to-r from-[#f7e4c6] via-[#ebcca0] to-[#d5b47f]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign Up

@@ -170,6 +170,22 @@ class ApiClient {
     return response.data;
   }
 
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const response = await this.client.post('/auth/password-reset/request', {
+      email,
+    });
+    return response.data;
+  }
+
+  async resetPassword(data: {
+    email: string;
+    otp: string;
+    password: string;
+  }): Promise<{ message: string }> {
+    const response = await this.client.post('/auth/password-reset/confirm', data);
+    return response.data;
+  }
+
   async applyAsLawyer(data: {
     specialization: string;
     experienceYears: number;

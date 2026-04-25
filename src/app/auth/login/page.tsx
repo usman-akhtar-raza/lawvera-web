@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { Briefcase } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
+import { PasswordField } from '@/components/auth/PasswordField';
 
 interface LoginForm {
   email: string;
@@ -102,14 +103,22 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
-              >
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-[var(--text-secondary)]"
+                >
+                  Password
+                </label>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-medium text-[#b07a43] hover:text-[#d5b47f]"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="mt-1">
-                <input
+                <PasswordField
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -117,9 +126,8 @@ export default function LoginPage() {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
-                  type="password"
                   autoComplete="current-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">

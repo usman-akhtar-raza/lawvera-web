@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
+import { PasswordField } from '@/components/auth/PasswordField';
 
 interface LawyerRegisterForm {
   name: string;
@@ -87,7 +88,7 @@ export default function LawyerRegisterPage() {
 
   const password = watch('password');
   const inputClass =
-    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]';
+    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]';
   const labelClass = 'block text-sm font-medium text-[var(--text-secondary)]';
 
   const toggleSlot = (day: string, slot: string) => {
@@ -178,7 +179,7 @@ export default function LawyerRegisterPage() {
             </Link>
             <Link
               href="/auth/register/lawyer"
-              className="flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent"
+              className="auth-tab-selected flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] border-transparent"
             >
               Lawyer
             </Link>
@@ -227,7 +228,7 @@ export default function LawyerRegisterPage() {
                 <label className={labelClass}>
                   Password *
                 </label>
-                <input
+                <PasswordField
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -235,8 +236,8 @@ export default function LawyerRegisterPage() {
                       message: 'Min 6 characters',
                     },
                   })}
-                  type="password"
-                  className={inputClass}
+                  autoComplete="new-password"
+                  inputClassName={inputClass}
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">
@@ -249,14 +250,14 @@ export default function LawyerRegisterPage() {
                 <label className={labelClass}>
                   Confirm Password *
                 </label>
-                <input
+                <PasswordField
                   {...register('confirmPassword', {
                     required: 'Please confirm password',
                     validate: (value) =>
                       value === password || 'Passwords do not match',
                   })}
-                  type="password"
-                  className={inputClass}
+                  autoComplete="new-password"
+                  inputClassName={inputClass}
                 />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">
@@ -374,7 +375,7 @@ export default function LawyerRegisterPage() {
               <label className={`${labelClass} mb-4`}>
                 Availability *
               </label>
-              <div className="space-y-4">
+              <div className="lawyer-timetable space-y-4">
                 {DAYS.map((day) => {
                   const daySchedule = availability.find((a) => a.day === day);
                   return (
@@ -409,7 +410,7 @@ export default function LawyerRegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50"
+                className="auth-submit-button w-full flex justify-center py-3 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50"
               >
                 {isLoading ? 'Registering...' : 'Register as Lawyer'}
               </button>

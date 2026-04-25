@@ -61,7 +61,7 @@ export default function ProfileSettingsPage() {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<LawyerApplyForm>();
 
   const inputClass =
-    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] text-sm';
+    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] text-sm';
   const labelClass = 'block text-sm font-medium text-[var(--text-secondary)]';
 
   const isClient  = user?.role === 'client';
@@ -377,7 +377,7 @@ export default function ProfileSettingsPage() {
                       (select slots on the days you are available)
                     </span>
                   </p>
-                  <div className="space-y-3">
+                  <div className="lawyer-timetable space-y-3">
                     {DAYS.map((day) => {
                       const daySchedule = availability.find((a) => a.day === day);
                       return (

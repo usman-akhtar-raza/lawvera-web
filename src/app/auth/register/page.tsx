@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
+import { PasswordField } from '@/components/auth/PasswordField';
 
 interface RegisterForm {
   name: string;
@@ -89,7 +90,7 @@ export default function RegisterPage() {
           <div className="mb-6 flex gap-2">
             <Link
               href="/auth/register"
-              className="flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1f1508] border-transparent"
+              className="auth-tab-selected flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] border-transparent"
             >
               User
             </Link>
@@ -159,7 +160,7 @@ export default function RegisterPage() {
                 Password
               </label>
               <div className="mt-1">
-                <input
+                <PasswordField
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -167,9 +168,8 @@ export default function RegisterPage() {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
-                  type="password"
                   autoComplete="new-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">
@@ -187,15 +187,14 @@ export default function RegisterPage() {
                 Confirm Password
               </label>
               <div className="mt-1">
-                <input
+                <PasswordField
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
                     validate: (value) =>
                       value === password || 'Passwords do not match',
                   })}
-                  type="password"
                   autoComplete="new-password"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
                 />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">
@@ -241,7 +240,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="auth-submit-button w-full flex justify-center py-2 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Creating account...' : 'Create account'}
               </button>
