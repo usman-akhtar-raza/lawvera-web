@@ -162,6 +162,13 @@ body.theme-dark select:-webkit-autofill {
     linear-gradient(135deg, #fffaf2 0%, #f6ede2 55%, #efe3d4 100%);
 }
 
+body.theme-dark .brand-gradient {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(213, 180, 127, 0.18), transparent 42%),
+    radial-gradient(circle at 80% 20%, rgba(70, 211, 161, 0.08), transparent 34%),
+    linear-gradient(135deg, #050c26 0%, #081133 52%, #101b3c 100%);
+}
+
 .brand-btn {
   background: linear-gradient(120deg, #fbead0, var(--brand-primary));
   color: #2b1603;
