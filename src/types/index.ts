@@ -102,6 +102,42 @@ export interface BookingCheckoutSession {
   expiresAt: string;
 }
 
+export interface FinanceCounterparty {
+  id: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+}
+
+export interface FinanceTransaction {
+  id: string;
+  bookingId: string;
+  direction: 'paid' | 'received';
+  counterparty: FinanceCounterparty;
+  lawyerSpecialization: string | null;
+  amountMinor: number;
+  currency: string;
+  provider: string;
+  paymentStatus: PaymentStatus;
+  bookingStatus: BookingStatus;
+  txnRefNo: string;
+  paidAt: string | null;
+  appointmentDate: string;
+  slotTime: string;
+  reason: string | null;
+}
+
+export interface FinanceResponse {
+  role: 'client' | 'lawyer';
+  summary: {
+    totalTransactions: number;
+    totalAmountMinor: number;
+    currency: string;
+  };
+  transactions: FinanceTransaction[];
+}
+
 export interface ChatMessage {
   _id: string;
   sessionId: string;

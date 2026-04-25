@@ -6,6 +6,7 @@ import type {
   Booking,
   BookingStatus,
   BookingCheckoutSession,
+  FinanceResponse,
   PaginatedResponse,
   ChatMessage,
   ChatSessionSummary,
@@ -300,6 +301,11 @@ class ApiClient {
 
   async cancelBooking(bookingId: string): Promise<Booking> {
     const response = await this.client.patch(`/bookings/${bookingId}/cancel`);
+    return response.data;
+  }
+
+  async getMyFinances(): Promise<FinanceResponse> {
+    const response = await this.client.get('/bookings/finances/me');
     return response.data;
   }
 

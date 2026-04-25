@@ -17,6 +17,7 @@ export function Navbar() {
   const isCasesRoute = pathname?.startsWith('/cases');
   const isFeedRoute = pathname?.startsWith('/feed');
   const isLawyer = user?.role === UserRole.LAWYER;
+  const hasFinances = user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
   const isDarkMode = theme === 'dark';
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo.svg';
   const navBackgroundClass = isDarkMode
@@ -109,6 +110,18 @@ export function Navbar() {
                 >
                   Communication
                 </Link>
+                {hasFinances && (
+                  <Link
+                    href="/finances"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      pathname?.startsWith('/finances')
+                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
+                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                    }`}
+                  >
+                    Finances
+                  </Link>
+                )}
                 <Link
                   href={getDashboardLink()}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
@@ -230,6 +243,15 @@ export function Navbar() {
                 >
                   Communication
                 </Link>
+                {hasFinances && (
+                  <Link
+                    href="/finances"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Finances
+                  </Link>
+                )}
                 <Link
                   href={getDashboardLink()}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
