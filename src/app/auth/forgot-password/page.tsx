@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-[var(--background-muted)] py-12 text-[var(--text-primary)] sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-[var(--background-muted)] px-4 py-10 text-[var(--text-primary)] sm:px-6 sm:py-12 lg:px-8">
       <div className="text-center sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <KeyRound className="h-12 w-12 text-[#d5b47f]" />
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="brand-card p-8">
+        <div className="brand-card p-5 sm:p-8">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label

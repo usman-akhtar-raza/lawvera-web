@@ -53,7 +53,7 @@ export function Navbar() {
             <Image src={logoSrc} alt="Logo" width={199} height={50} />
           </div>
 
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
             <Link
               href="/lawyers"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
@@ -179,7 +179,7 @@ export function Navbar() {
           </div>
 
           <button
-            className="md:hidden p-2 text-[var(--text-primary)]"
+            className="lg:hidden p-2 text-[var(--text-primary)]"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -192,7 +192,7 @@ export function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className={`md:hidden border-t border-white/10 ${mobileMenuBgClass}`}>
+        <div className={`lg:hidden border-t border-white/10 ${mobileMenuBgClass}`}>
           <div className="px-2 pt-2 pb-3 space-y-1 text-[var(--text-secondary)]">
             <Link
               href="/lawyers"

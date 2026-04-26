@@ -79,7 +79,7 @@ export default function LawyerDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="brand-card brand-card--muted overflow-hidden">
           <div className="md:flex">
-            <div className="md:w-1/3 p-8 bg-white/5 border-r border-white/5">
+            <div className="p-5 sm:p-8 md:w-1/3 bg-white/5 border-b border-white/5 md:border-b-0 md:border-r">
               <div className="text-center">
                 <div className="relative w-32 h-32 rounded-full overflow-hidden bg-white/10 border border-white/10 mx-auto mb-4">
                   {lawyer.profilePhotoUrl || user?.avatarUrl ? (
@@ -140,7 +140,7 @@ export default function LawyerDetailPage() {
               </div>
             </div>
 
-            <div className="md:w-2/3 p-8 bg-transparent">
+            <div className="p-5 sm:p-8 md:w-2/3 bg-transparent">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
                   About

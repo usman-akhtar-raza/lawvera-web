@@ -41,16 +41,16 @@ export default function Home() {
     <div className="bg-transparent text-[var(--text-primary)]">
       {/* Hero Section */}
       <section className="brand-gradient">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="text-center space-y-6">
             <p className="inline-flex items-center gap-2 text-sm tracking-[0.3em] uppercase text-[#b98958]">
               Trusted Legal Network
             </p>
-            <h1 className="text-4xl md:text-6xl font-semibold leading-tight text-[var(--text-primary)]">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-semibold leading-tight text-[var(--text-primary)]">
               Find your legal expert with{" "}
               <span className="text-[#d5b47f]">confidence</span>
             </h1>
-            <p className="text-xl md:text-2xl text-[var(--text-secondary)]">
+            <p className="text-lg sm:text-xl md:text-2xl text-[var(--text-secondary)]">
               Connect with qualified lawyers and book appointments effortlessly
             </p>
             <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
@@ -67,7 +67,7 @@ export default function Home() {
                 </div>
                 <button
                   type="submit"
-                  className="px-8 py-4 rounded-2xl font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/30 transition-all flex items-center justify-center"
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/30 transition-all flex items-center justify-center"
                 >
                   Search
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -85,7 +85,7 @@ export default function Home() {
             Why Choose Lawvera?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="brand-card p-8 text-center">
+            <div className="brand-card p-6 sm:p-8 text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
                 <Search className="h-8 w-8 text-[#d5b47f]" />
               </div>
@@ -94,7 +94,7 @@ export default function Home() {
                 Find lawyers by specialization, location, experience, and ratings
               </p>
             </div>
-            <div className="brand-card p-8 text-center">
+            <div className="brand-card p-6 sm:p-8 text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
                 <Clock className="h-8 w-8 text-[#46d3a1]" />
               </div>
@@ -103,7 +103,7 @@ export default function Home() {
                 Book appointments online with real-time availability
               </p>
             </div>
-            <div className="brand-card p-8 text-center">
+            <div className="brand-card p-6 sm:p-8 text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/5 border border-white/10">
                 <Shield className="h-8 w-8 text-[#f3c969]" />
               </div>

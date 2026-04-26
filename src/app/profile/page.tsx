@@ -140,7 +140,7 @@ export default function ProfileSettingsPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center px-4 text-[var(--text-primary)]">
-        <div className="brand-card max-w-md w-full p-8 text-center space-y-4">
+        <div className="brand-card max-w-md w-full p-5 sm:p-8 text-center space-y-4">
           <h1 className="text-2xl font-semibold">Sign in to access settings</h1>
           <p className="text-sm text-[var(--text-muted)]">
             Login to customize your account preferences and appearance.
@@ -383,7 +383,7 @@ export default function ProfileSettingsPage() {
                       return (
                         <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
                           <h4 className="font-medium mb-2 text-sm">{day}</h4>
-                          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                          <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
                             {TIME_SLOTS.map((slot) => {
                               const isSelected = daySchedule?.slots.includes(slot);
                               return (

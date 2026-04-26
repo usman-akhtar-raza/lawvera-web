@@ -153,7 +153,7 @@ export default function LawyerRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-muted)] py-12 px-4 sm:px-6 lg:px-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] py-10 px-4 sm:py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           
@@ -169,7 +169,7 @@ export default function LawyerRegisterPage() {
           </p>
         </div>
 
-        <div className="brand-card p-8">
+        <div className="brand-card p-5 sm:p-8">
           <div className="mb-6 flex gap-2">
             <Link
               href="/auth/register"
@@ -381,7 +381,7 @@ export default function LawyerRegisterPage() {
                   return (
                     <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
                       <h4 className="font-medium mb-2 text-[var(--text-primary)]">{day}</h4>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
                         {TIME_SLOTS.map((slot) => {
                           const isSelected = daySchedule?.slots.includes(slot);
                           return (

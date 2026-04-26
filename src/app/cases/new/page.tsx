@@ -91,7 +91,7 @@ export default function CreateCasePage() {
           the case and you can select who to work with.
         </p>
 
-        <div className="brand-card p-8">
+        <div className="brand-card p-5 sm:p-8">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className={labelClass}>Case Title *</label>

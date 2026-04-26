@@ -124,7 +124,7 @@ function VerifyOtpContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-muted)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--background-muted)] flex flex-col justify-center px-4 py-10 sm:px-6 sm:py-12 lg:px-8 text-[var(--text-primary)]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center">
           <ShieldCheck className="h-12 w-12 text-[#d5b47f]" />
@@ -137,7 +137,7 @@ function VerifyOtpContent() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="brand-card p-8">
+        <div className="brand-card p-5 sm:p-8">
           <div className="flex justify-center gap-3 mb-8" onPaste={handlePaste}>
             {otp.map((digit, index) => (
               <input

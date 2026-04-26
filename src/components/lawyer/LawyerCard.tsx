@@ -14,9 +14,9 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
 
   return (
     <Link href={`/lawyers/${lawyer._id}`}>
-      <div className="brand-card hover:border-[#d5b47f]/40 transition-all p-6 cursor-pointer">
-        <div className="flex items-start space-x-4">
-          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-white/10 flex-shrink-0 border border-white/20">
+      <div className="brand-card hover:border-[#d5b47f]/40 transition-all p-4 sm:p-6 cursor-pointer">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-white/10 flex-shrink-0 border border-white/20">
             {lawyer.profilePhotoUrl || user?.avatarUrl ? (
               <Image
                 src={lawyer.profilePhotoUrl || user?.avatarUrl || ''}
@@ -31,7 +31,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-1">
+            <h3 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] mb-1">
               {user?.name || 'Lawyer'}
             </h3>
             <p className="text-[#d5b47f] font-medium mb-2">
@@ -54,7 +54,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
                 {lawyer.experienceYears} years
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center text-lg font-bold text-[var(--text-primary)]">
                 <span className="mr-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#46d3a1]">
                   PKR

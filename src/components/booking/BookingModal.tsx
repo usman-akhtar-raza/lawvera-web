@@ -83,10 +83,10 @@ export function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--surface)] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-[#d5b47f]/20">
-        <div className="sticky top-0 bg-[var(--surface)] border-b border-white/10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50 p-0 sm:items-center sm:p-4">
+      <div className="bg-[var(--surface)] border border-white/10 rounded-t-2xl sm:rounded-2xl max-w-2xl w-full max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto shadow-2xl shadow-[#d5b47f]/20">
+        <div className="sticky top-0 bg-[var(--surface)] border-b border-white/10 px-4 py-4 sm:px-6 flex items-center justify-between rounded-t-2xl">
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
             Book Appointment
           </h2>
           <button
@@ -97,7 +97,7 @@ export function BookingModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 text-[var(--text-primary)]">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6 text-[var(--text-primary)]">
           <div className="rounded-2xl border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-4 py-3">
             <p className="text-sm font-semibold text-[var(--text-primary)]">
               Consultation fee: PKR {formattedFee}
@@ -111,7 +111,7 @@ export function BookingModal({
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Select Date
             </label>
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
               {getAvailableDates().map((date) => {
                 const dayName = format(date, 'EEEE');
                 const hasSlots = lawyer.availability.some(
@@ -132,7 +132,7 @@ export function BookingModal({
                       setSelectedTime('');
                     }}
                     disabled={!hasSlots || isPast}
-                    className={`p-3 rounded-lg border text-sm transition-colors ${
+                    className={`p-2 sm:p-3 rounded-lg border text-sm transition-colors ${
                       isSelected
                         ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
                         : hasSlots && !isPast
@@ -153,7 +153,7 @@ export function BookingModal({
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Select Time
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {getAvailableSlots().map((slot) => (
                   <button
                     key={slot}
@@ -190,18 +190,18 @@ export function BookingModal({
             />
           </div>
 
-          <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/10">
+          <div className="flex flex-col-reverse gap-3 pt-4 border-t border-white/10 sm:flex-row sm:items-center sm:justify-end sm:space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[var(--text-secondary)] border border-white/10 rounded-lg hover:bg-[var(--brand-accent-soft)] transition-colors"
+              className="w-full px-4 py-2 text-[var(--text-secondary)] border border-white/10 rounded-lg hover:bg-[var(--brand-accent-soft)] transition-colors sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!selectedDate || !selectedTime || isSubmitting}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full px-6 py-2 rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all sm:w-auto"
             >
               {isSubmitting ? 'Redirecting...' : 'Continue to JazzCash'}
             </button>

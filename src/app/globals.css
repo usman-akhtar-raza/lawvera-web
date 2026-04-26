@@ -85,6 +85,22 @@ body {
   color: var(--text-primary);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 body::selection {
@@ -151,6 +167,7 @@ body.theme-dark select:-webkit-autofill {
   border: 1px solid var(--border-soft);
   border-radius: 1rem;
   box-shadow: var(--shadow-xl);
+  overflow-wrap: anywhere;
 }
 
 .brand-card--muted {
