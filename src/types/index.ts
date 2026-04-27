@@ -216,6 +216,13 @@ export interface AuthResponse {
   profileStatus?: LawyerStatus;
 }
 
+export interface ProfileSwitchStatus {
+  canSwitchToLawyerProfile: boolean;
+  canSwitchToClientProfile: boolean;
+  switchToLawyerProfileReason: string | null;
+  switchToClientProfileReason: string | null;
+}
+
 export interface OtpRequiredResponse {
   message: string;
   email: string;

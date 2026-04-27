@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Moon, Sun, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -10,7 +10,7 @@ import { getRoleDisplayName } from '@/lib/role-display';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
-import type { AuthResponse } from '@/types';
+import type { AuthResponse, ProfileSwitchStatus } from '@/types';
 
 const themeOptions = [
   {
@@ -58,6 +58,8 @@ export default function ProfileSettingsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
+  const [switchStatus, setSwitchStatus] = useState<ProfileSwitchStatus | null>(null);
+  const [isSwitchStatusLoading, setIsSwitchStatusLoading] = useState(false);
   const [availability, setAvailability] = useState<Array<{ day: string; slots: string[] }>>(
     DAYS.map((day) => ({ day, slots: [] })),
   );
@@ -70,11 +72,63 @@ export default function ProfileSettingsPage() {
 
   const isClient  = user?.role === 'client';
   const isLawyer  = user?.role === 'lawyer';
+  const switchBlockedReason = isClient
+    ? switchStatus?.switchToLawyerProfileReason
+    : isLawyer
+      ? switchStatus?.switchToClientProfileReason
+      : null;
+  const isSwitchBlocked = isClient
+    ? switchStatus?.canSwitchToLawyerProfile === false
+    : isLawyer
+      ? switchStatus?.canSwitchToClientProfile === false
+      : false;
 
   // Toggle is ON when the user is a lawyer OR when a client has opened the form
   const toggleOn = isLawyer || (isClient && formOpen);
 
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role === 'admin') {
+      setSwitchStatus(null);
+      setIsSwitchStatusLoading(false);
+      return;
+    }
+
+    let isActive = true;
+    setIsSwitchStatusLoading(true);
+
+    void api
+      .getProfileSwitchStatus()
+      .then((data) => {
+        if (isActive) {
+          setSwitchStatus(data);
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setSwitchStatus(null);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsSwitchStatusLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isAuthenticated, user?._id, user?.role]);
+
   const handleToggle = () => {
+    if (isSwitchStatusLoading) {
+      return;
+    }
+
+    if (switchBlockedReason) {
+      toast.error(switchBlockedReason);
+      return;
+    }
+
     if (isClient) {
       // client: open / close the apply form
       setFormOpen((v) => !v);
@@ -275,12 +329,22 @@ export default function ProfileSettingsPage() {
                     ? 'Toggle off to switch back to a client account. Your lawyer profile will be saved.'
                     : 'Toggle on to apply and list your profile as a verified lawyer.'}
                 </p>
+                {isSwitchStatusLoading && (
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Checking your current case and booking obligations...
+                  </p>
+                )}
+                {!isSwitchStatusLoading && switchBlockedReason && (
+                  <p className="mt-1 text-xs font-medium  light:text-amber-300">
+                    {switchBlockedReason}
+                  </p>
+                )}
               </div>
               <button
                 type="button"
                 role="switch"
                 aria-checked={toggleOn}
-                disabled={isReverting || isSubmitting}
+                disabled={isReverting || isSubmitting || isSwitchStatusLoading || isSwitchBlocked}
                 onClick={handleToggle}
                 className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed ${
                   toggleOn ? 'bg-[#d5b47f]' : 'bg-white/10'

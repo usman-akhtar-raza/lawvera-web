@@ -17,6 +17,7 @@ import type {
   SearchLawyersParams,
   RegisterResponse,
   LoginResponse,
+  ProfileSwitchStatus,
   LegalCase,
   CaseCategory,
   CaseStatus,
@@ -219,6 +220,11 @@ class ApiClient {
 
   async getProfile(): Promise<User & { lawyerProfile?: LawyerProfile }> {
     const response = await this.client.get('/auth/me');
+    return response.data;
+  }
+
+  async getProfileSwitchStatus(): Promise<ProfileSwitchStatus> {
+    const response = await this.client.get('/auth/profile-switch-status');
     return response.data;
   }
 
