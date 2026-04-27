@@ -122,20 +122,62 @@ export interface FinanceTransaction {
   paymentStatus: PaymentStatus;
   bookingStatus: BookingStatus;
   txnRefNo: string;
+  receiptNumber?: string;
   paidAt: string | null;
+  initiatedAt?: string | null;
+  failedAt?: string | null;
   appointmentDate: string;
   slotTime: string;
   reason: string | null;
+  responseMessage?: string | null;
+}
+
+export interface FinanceSummary {
+  totalTransactions: number;
+  totalAmountMinor: number;
+  currency: string;
+  succeededTransactions: number;
+  pendingTransactions: number;
+  failedTransactions: number;
+  cancelledTransactions: number;
+  expiredTransactions: number;
 }
 
 export interface FinanceResponse {
   role: 'client' | 'lawyer';
-  summary: {
-    totalTransactions: number;
-    totalAmountMinor: number;
-    currency: string;
-  };
+  summary: FinanceSummary;
   transactions: FinanceTransaction[];
+}
+
+export interface AdminFinanceParticipant extends FinanceCounterparty {
+  specialization?: string | null;
+}
+
+export interface AdminFinanceTransaction {
+  id: string;
+  bookingId: string;
+  client: FinanceCounterparty;
+  lawyer: AdminFinanceParticipant;
+  amountMinor: number;
+  currency: string;
+  provider: string;
+  paymentStatus: PaymentStatus;
+  bookingStatus: BookingStatus;
+  txnRefNo: string;
+  receiptNumber: string;
+  paidAt: string | null;
+  initiatedAt: string | null;
+  failedAt: string | null;
+  appointmentDate: string | null;
+  slotTime: string;
+  reason: string | null;
+  responseMessage: string | null;
+}
+
+export interface AdminFinanceResponse {
+  role: 'admin';
+  summary: FinanceSummary;
+  transactions: AdminFinanceTransaction[];
 }
 
 export interface ChatMessage {

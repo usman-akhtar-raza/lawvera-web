@@ -11,13 +11,49 @@ import {
   BookOpen,
   Upload,
   Trash2,
+  ReceiptText,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import type { Booking, LawyerProfile } from '@/types';
+import type { AdminFinanceTransaction, Booking, LawyerProfile } from '@/types';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { asLawyerProfile, asUser } from '@/lib/type-guards';
+
+const formatMoney = (amountMinor: number, currency: string) =>
+  new Intl.NumberFormat('en-PK', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amountMinor / 100);
+
+const getBookingStatusClass = (status: string) => {
+  if (status === 'confirmed') {
+    return 'bg-[#e2f4ed] text-[#1f3d36]';
+  }
+
+  if (status === 'awaiting_payment' || status === 'pending') {
+    return 'bg-[#f9f0e2] text-[#8a5f2c]';
+  }
+
+  if (status === 'completed') {
+    return 'bg-[var(--brand-accent-soft)] text-[#8a5f2c]';
+  }
+
+  return 'bg-[#fde8ed] text-[#a23a4c]';
+};
+
+const getPaymentStatusClass = (status: string) => {
+  if (status === 'succeeded') {
+    return 'bg-[#e2f4ed] text-[#1f3d36]';
+  }
+
+  if (status === 'pending') {
+    return 'bg-[#f9f0e2] text-[#8a5f2c]';
+  }
+
+  return 'bg-[#fde8ed] text-[#a23a4c]';
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -52,6 +88,12 @@ export default function AdminDashboard() {
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['admin-analytics'],
     queryFn: () => api.getAnalytics(),
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const { data: adminFinances, isLoading: adminFinancesLoading } = useQuery({
+    queryKey: ['admin-finances'],
+    queryFn: () => api.getAdminFinances(),
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -144,6 +186,7 @@ export default function AdminDashboard() {
     overviewLoading ||
     bookingsLoading ||
     analyticsLoading ||
+    adminFinancesLoading ||
     lawSourcesLoading
   ) {
     return (
@@ -160,6 +203,8 @@ export default function AdminDashboard() {
   const pending: LawyerProfile[] = overview?.pending || [];
   const metrics = overview?.metrics || { total: 0, approved: 0, pending: 0 };
   const recentBookings: Booking[] = bookings || [];
+  const recentFinanceTransactions: AdminFinanceTransaction[] =
+    adminFinances?.transactions || [];
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
@@ -276,6 +321,145 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="brand-card p-6">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Settled Payment Volume
+            </p>
+            <p className="mt-2 text-3xl font-bold text-[#b07a43]">
+              {formatMoney(
+                adminFinances?.summary.totalAmountMinor || 0,
+                adminFinances?.summary.currency || 'PKR',
+              )}
+            </p>
+          </div>
+          <div className="brand-card p-6">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Recorded Transactions
+            </p>
+            <p className="mt-2 text-3xl font-bold">
+              {adminFinances?.summary.totalTransactions || 0}
+            </p>
+          </div>
+          <div className="brand-card p-6">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Failed / Cancelled / Expired
+            </p>
+            <p className="mt-2 text-3xl font-bold">
+              {(adminFinances?.summary.failedTransactions || 0) +
+                (adminFinances?.summary.cancelledTransactions || 0) +
+                (adminFinances?.summary.expiredTransactions || 0)}
+            </p>
+          </div>
+        </div>
+
+        <div className="brand-card p-6 mb-8">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Finance Ledger</h2>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                Client-to-lawyer payment pairs with receipt and status history.
+              </p>
+            </div>
+            <span className="rounded-full border border-[#d5b47f]/40 bg-[var(--brand-accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b07a43]">
+              JazzCash ledger
+            </span>
+          </div>
+
+          {recentFinanceTransactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-white/10">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Client
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Lawyer
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Receipt
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Appointment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Payment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      Booking
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {recentFinanceTransactions.slice(0, 12).map((transaction) => (
+                    <tr key={transaction.id} className="hover:bg-white/5">
+                      <td className="px-6 py-4">
+                        <div className="font-medium">
+                          {transaction.client.name || 'N/A'}
+                        </div>
+                        <div className="text-xs text-[var(--text-secondary)]">
+                          {transaction.client.email || transaction.client.phone || 'No contact'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium">
+                          {transaction.lawyer.name || 'N/A'}
+                        </div>
+                        <div className="text-xs text-[var(--text-secondary)]">
+                          {transaction.lawyer.specialization || transaction.lawyer.email || 'No details'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-[#b07a43]">
+                        {formatMoney(transaction.amountMinor, transaction.currency)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                        <div className="inline-flex items-center gap-2">
+                          <ReceiptText className="h-4 w-4 text-[#d5b47f]" />
+                          <div>
+                            <div>{transaction.receiptNumber}</div>
+                            <div className="text-xs">{transaction.txnRefNo}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                        {transaction.appointmentDate
+                          ? `${new Date(transaction.appointmentDate).toLocaleDateString()} at ${transaction.slotTime}`
+                          : transaction.slotTime}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${getPaymentStatusClass(
+                            transaction.paymentStatus,
+                          )}`}
+                        >
+                          {transaction.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${getBookingStatusClass(
+                            transaction.bookingStatus,
+                          )}`}
+                        >
+                          {transaction.bookingStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--text-muted)]">
+              No finance transactions recorded yet.
+            </p>
+          )}
+        </div>
 
         <div className="brand-card p-6 mb-8">
           <div className="mb-5 flex items-center justify-between">
@@ -444,17 +628,9 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              booking.status === 'confirmed'
-                                ? 'bg-[#e2f4ed] text-[#1f3d36]'
-                                : booking.status === 'awaiting_payment'
-                                  ? 'bg-[#f9f0e2] text-[#8a5f2c]'
-                                : booking.status === 'pending'
-                                  ? 'bg-[#f9f0e2] text-[#8a5f2c]'
-                                  : booking.status === 'completed'
-                                    ? 'bg-[var(--brand-accent-soft)] text-[#8a5f2c]'
-                                    : 'bg-[#fde8ed] text-[#a23a4c]'
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getBookingStatusClass(
+                              booking.status,
+                            )}`}
                           >
                             {booking.status}
                           </span>
