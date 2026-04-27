@@ -209,6 +209,20 @@ class ApiClient {
     return { user, tokens, lawyerProfile };
   }
 
+  async reactivateLawyerProfile(): Promise<AuthResponse> {
+    const reactivateRes = await this.client.post('/lawyers/reactivate-profile');
+    const { lawyerProfile } = reactivateRes.data as {
+      user: unknown;
+      lawyerProfile: LawyerProfile;
+    };
+
+    const refreshToken = getRefreshToken();
+    const refreshRes = await this.client.post('/auth/refresh', { refreshToken });
+    const { user, tokens } = refreshRes.data as AuthResponse;
+
+    return { user, tokens, lawyerProfile };
+  }
+
   async revertToClient(): Promise<AuthResponse> {
     // Step 1: revert role in DB (LawyerProfile kept intact)
     await this.client.post('/lawyers/revert-to-client');

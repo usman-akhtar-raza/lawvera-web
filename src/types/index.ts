@@ -221,6 +221,8 @@ export interface ProfileSwitchStatus {
   canSwitchToClientProfile: boolean;
   switchToLawyerProfileReason: string | null;
   switchToClientProfileReason: string | null;
+  hasStoredLawyerProfile: boolean;
+  storedLawyerProfileStatus: LawyerStatus | null;
 }
 
 export interface OtpRequiredResponse {

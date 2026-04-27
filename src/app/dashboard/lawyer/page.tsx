@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, Clock, CheckCircle, XCircle, Settings } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { BookingStatus } from '@/types';
+import { BookingStatus, LawyerStatus } from '@/types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
@@ -74,11 +74,21 @@ export default function LawyerDashboard() {
           </button>
         </div>
 
-        {profile?.status === 'pending' && (
+        {profile?.status === LawyerStatus.PENDING && (
           <div className="rounded-lg border border-[#f3c969]/30 bg-[#f9f0e2] p-4 mb-6">
             <p className="text-[#8a5f2c]">
               Your profile is pending approval. You&apos;ll be able to receive
               bookings once approved.
+            </p>
+          </div>
+        )}
+
+        {profile?.status === LawyerStatus.REJECTED && (
+          <div className="rounded-lg border border-[#ff8c8c]/30 bg-[#fde8ed] p-4 mb-6">
+            <p className="text-[#8f3345]">
+              Your lawyer profile is currently rejected. You can update your time
+              slots from settings, but your profile will stay hidden from clients
+              until admin approval.
             </p>
           </div>
         )}

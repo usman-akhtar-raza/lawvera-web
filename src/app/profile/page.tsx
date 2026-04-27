@@ -37,6 +37,17 @@ const SPECIALIZATIONS = [
   'Corporate Law', 'Immigration Law', 'Tax Law',
 ];
 
+const createEmptyAvailability = () =>
+  DAYS.map((day) => ({ day, slots: [] as string[] }));
+
+const normalizeAvailability = (
+  source: Array<{ day: string; slots: string[] }> = [],
+) =>
+  DAYS.map((day) => ({
+    day,
+    slots: source.find((item) => item.day === day)?.slots ?? [],
+  }));
+
 const getFilledAvailability = (
   availability: Array<{ day: string; slots: string[] }>,
 ) => availability.filter((item) => item.slots.length > 0);
@@ -58,10 +69,12 @@ export default function ProfileSettingsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isAvailabilitySaving, setIsAvailabilitySaving] = useState(false);
   const [switchStatus, setSwitchStatus] = useState<ProfileSwitchStatus | null>(null);
   const [isSwitchStatusLoading, setIsSwitchStatusLoading] = useState(false);
   const [availability, setAvailability] = useState<Array<{ day: string; slots: string[] }>>(
-    DAYS.map((day) => ({ day, slots: [] })),
+    createEmptyAvailability(),
   );
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<LawyerApplyForm>();
@@ -72,6 +85,9 @@ export default function ProfileSettingsPage() {
 
   const isClient  = user?.role === 'client';
   const isLawyer  = user?.role === 'lawyer';
+  const hasStoredLawyerProfile = Boolean(
+    lawyerProfile || switchStatus?.hasStoredLawyerProfile,
+  );
   const switchBlockedReason = isClient
     ? switchStatus?.switchToLawyerProfileReason
     : isLawyer
@@ -85,6 +101,34 @@ export default function ProfileSettingsPage() {
 
   // Toggle is ON when the user is a lawyer OR when a client has opened the form
   const toggleOn = isLawyer || (isClient && formOpen);
+
+  useEffect(() => {
+    if (isLawyer && lawyerProfile) {
+      setAvailability(normalizeAvailability(lawyerProfile.availability));
+    }
+  }, [isLawyer, lawyerProfile]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isLawyer || lawyerProfile) {
+      return;
+    }
+
+    let isActive = true;
+
+    void api
+      .getLawyerProfile()
+      .then((profile) => {
+        if (isActive) {
+          setLawyerProfile(profile);
+          setAvailability(normalizeAvailability(profile.availability));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isActive = false;
+    };
+  }, [isAuthenticated, isLawyer, lawyerProfile, setLawyerProfile]);
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role === 'admin') {
@@ -130,6 +174,11 @@ export default function ProfileSettingsPage() {
     }
 
     if (isClient) {
+      if (hasStoredLawyerProfile) {
+        void handleReactivateLawyer();
+        return;
+      }
+
       // client: open / close the apply form
       setFormOpen((v) => !v);
     } else if (isLawyer) {
@@ -176,6 +225,7 @@ export default function ProfileSettingsPage() {
       setLawyerProfile(r.lawyerProfile ?? null);
       toast.success('Application submitted! Pending admin approval.');
       setFormOpen(false);
+      setAvailability(createEmptyAvailability());
       reset();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to submit application.'));
@@ -197,6 +247,42 @@ export default function ProfileSettingsPage() {
       toast.error(getErrorMessage(error, 'Failed to switch role.'));
     } finally {
       setIsReverting(false);
+    }
+  };
+
+  const handleReactivateLawyer = async () => {
+    setIsReactivating(true);
+    try {
+      const response = await api.reactivateLawyerProfile();
+      const r = response as AuthResponse;
+      setAuth(r.user, r.tokens, r.lawyerProfile);
+      setLawyerProfile(r.lawyerProfile ?? null);
+      setFormOpen(false);
+      toast.success('Switched back to your saved lawyer profile.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to switch back to lawyer.'));
+    } finally {
+      setIsReactivating(false);
+    }
+  };
+
+  const handleAvailabilitySave = async () => {
+    const filledAvailability = getFilledAvailability(availability);
+    if (filledAvailability.length === 0) {
+      toast.error('Select at least one availability slot in the week');
+      return;
+    }
+
+    setIsAvailabilitySaving(true);
+    try {
+      const updatedProfile = await api.updateAvailability(filledAvailability);
+      setLawyerProfile(updatedProfile);
+      setAvailability(normalizeAvailability(updatedProfile.availability));
+      toast.success('Time slots updated successfully.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update time slots.'));
+    } finally {
+      setIsAvailabilitySaving(false);
     }
   };
 
@@ -327,7 +413,9 @@ export default function ProfileSettingsPage() {
                 <p className="text-sm text-[var(--text-muted)]">
                   {isLawyer
                     ? 'Toggle off to switch back to a client account. Your lawyer profile will be saved.'
-                    : 'Toggle on to apply and list your profile as a verified lawyer.'}
+                    : hasStoredLawyerProfile
+                      ? 'Toggle on to switch back to your saved lawyer profile. Your previous time slots will be reused.'
+                      : 'Toggle on to apply and list your profile as a verified lawyer.'}
                 </p>
                 {isSwitchStatusLoading && (
                   <p className="mt-1 text-xs text-[var(--text-muted)]">
@@ -335,7 +423,7 @@ export default function ProfileSettingsPage() {
                   </p>
                 )}
                 {!isSwitchStatusLoading && switchBlockedReason && (
-                  <p className="mt-1 text-xs font-medium  light:text-amber-300">
+                  <p className="mt-1 text-xs font-medium text-[#7a511f] dark:text-amber-300">
                     {switchBlockedReason}
                   </p>
                 )}
@@ -344,7 +432,13 @@ export default function ProfileSettingsPage() {
                 type="button"
                 role="switch"
                 aria-checked={toggleOn}
-                disabled={isReverting || isSubmitting || isSwitchStatusLoading || isSwitchBlocked}
+                disabled={
+                  isReverting ||
+                  isSubmitting ||
+                  isReactivating ||
+                  isSwitchStatusLoading ||
+                  isSwitchBlocked
+                }
                 onClick={handleToggle}
                 className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed ${
                   toggleOn ? 'bg-[#d5b47f]' : 'bg-white/10'
@@ -491,7 +585,11 @@ export default function ProfileSettingsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setFormOpen(false); reset(); }}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setAvailability(createEmptyAvailability());
+                      reset();
+                    }}
                     className="px-4 py-2.5 rounded-lg text-sm border border-white/10 text-[var(--text-secondary)] hover:border-white/20"
                   >
                     Cancel
@@ -567,6 +665,65 @@ export default function ProfileSettingsPage() {
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] pt-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#d5b47f] border-t-transparent" />
                 Switching back to client…
+              </div>
+            )}
+
+            {isReactivating && (
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] pt-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#d5b47f] border-t-transparent" />
+                Restoring your saved lawyer profile…
+              </div>
+            )}
+
+            {isLawyer && lawyerProfile && (
+              <div className="space-y-4 pt-2 border-t border-white/10">
+                <div>
+                  <p className="font-semibold">Availability Settings</p>
+                  <p className="text-sm text-[var(--text-muted)] mt-0.5">
+                    Update the time slots saved in your lawyer profile.
+                  </p>
+                </div>
+
+                <div className="lawyer-timetable space-y-3">
+                  {DAYS.map((day) => {
+                    const daySchedule = availability.find((item) => item.day === day);
+                    return (
+                      <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
+                        <h4 className="font-medium mb-2 text-sm">{day}</h4>
+                        <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
+                          {TIME_SLOTS.map((slot) => {
+                            const isSelected = daySchedule?.slots.includes(slot);
+                            return (
+                              <button
+                                key={slot}
+                                type="button"
+                                onClick={() => toggleSlot(day, slot)}
+                                className={`px-2 py-1.5 rounded text-xs border transition-colors ${
+                                  isSelected
+                                    ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
+                                    : 'bg-white/5 text-[var(--text-secondary)] border-white/10 hover:border-[#d5b47f]/40'
+                                }`}
+                              >
+                                {slot}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    disabled={isAvailabilitySaving}
+                    onClick={handleAvailabilitySave}
+                    className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAvailabilitySaving ? 'Saving…' : 'Save Time Slots'}
+                  </button>
+                </div>
               </div>
             )}
           </section>
