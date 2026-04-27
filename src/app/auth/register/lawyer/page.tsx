@@ -46,6 +46,10 @@ const TIME_SLOTS = [
   '5:00 PM',
 ];
 
+const getFilledAvailability = (
+  availability: Array<{ day: string; slots: string[] }>,
+) => availability.filter((item) => item.slots.length > 0);
+
 export default function LawyerRegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
@@ -111,6 +115,12 @@ export default function LawyerRegisterPage() {
       return;
     }
 
+    const filledAvailability = getFilledAvailability(availability);
+    if (filledAvailability.length === 0) {
+      toast.error('Select at least one availability slot in the week');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const registerData = {
@@ -127,7 +137,7 @@ export default function LawyerRegisterPage() {
       };
       const response = await api.registerLawyer({
         ...registerData,
-        availability,
+        availability: filledAvailability,
       });
 
       if ('requiresVerification' in response && response.requiresVerification) {
@@ -375,6 +385,10 @@ export default function LawyerRegisterPage() {
               <label className={`${labelClass} mb-4`}>
                 Availability *
               </label>
+              <p className="mb-4 text-sm text-[var(--text-muted)]">
+                Select at least one slot in the week. You do not need to pick a
+                slot for every day.
+              </p>
               <div className="lawyer-timetable space-y-4">
                 {DAYS.map((day) => {
                   const daySchedule = availability.find((a) => a.day === day);

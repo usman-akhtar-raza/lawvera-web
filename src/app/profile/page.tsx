@@ -37,6 +37,10 @@ const SPECIALIZATIONS = [
   'Corporate Law', 'Immigration Law', 'Tax Law',
 ];
 
+const getFilledAvailability = (
+  availability: Array<{ day: string; slots: string[] }>,
+) => availability.filter((item) => item.slots.length > 0);
+
 interface LawyerApplyForm {
   specialization: string;
   experienceYears: number;
@@ -96,9 +100,14 @@ export default function ProfileSettingsPage() {
   };
 
   const onSubmit = async (data: LawyerApplyForm) => {
+    const filledAvailability = getFilledAvailability(availability);
+    if (filledAvailability.length === 0) {
+      toast.error('Select at least one availability slot in the week');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const filledAvailability = availability.filter((a) => a.slots.length > 0);
       const response = await api.applyAsLawyer({
         specialization: data.specialization,
         experienceYears: Number(data.experienceYears),
@@ -374,7 +383,7 @@ export default function ProfileSettingsPage() {
                   <p className={`${labelClass} mb-3`}>
                     Availability
                     <span className="ml-1 text-xs text-[var(--text-muted)] font-normal">
-                      (select slots on the days you are available)
+                      (select at least one slot in the week)
                     </span>
                   </p>
                   <div className="lawyer-timetable space-y-3">
