@@ -144,6 +144,7 @@ export default function CaseDetailPage() {
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);
   const lawyerRequests = legalCase.lawyerRequests || [];
+  const canAccessCommunication = isClient || isLawyer;
   const currentLawyerRequest = lawyerRequests.find((request) => {
     const requestLawyer = asLawyerProfile(request.lawyer);
     const requestLawyerUser = asUser(requestLawyer?.user);
@@ -407,10 +408,12 @@ export default function CaseDetailPage() {
           </div>
         )}
 
-        <CaseCommunicationPanel
-          caseId={caseId}
-          isEnabled={Boolean(lawyerUser)}
-        />
+        {canAccessCommunication && (
+          <CaseCommunicationPanel
+            caseId={caseId}
+            isEnabled={Boolean(lawyerUser)}
+          />
+        )}
 
         {/* Activity Log */}
         <div className="brand-card p-6">

@@ -7,7 +7,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, MessageSquare, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { CaseStatus, type CaseCommunicationThreadSummary } from '@/types';
+import {
+  CaseStatus,
+  UserRole,
+  type CaseCommunicationThreadSummary,
+} from '@/types';
 
 const STATUS_LABEL: Record<CaseStatus, string> = {
   [CaseStatus.OPEN]: 'Open',
@@ -33,17 +37,22 @@ const formatTimestamp = (value: string) => {
 export default function CommunicationPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const hasCommunicationAccess =
+    user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/auth/login?redirect=/communication');
     }
-  }, [authLoading, isAuthenticated, router]);
+    if (!authLoading && isAuthenticated && !hasCommunicationAccess) {
+      router.push('/dashboard/admin');
+    }
+  }, [authLoading, hasCommunicationAccess, isAuthenticated, router]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['communication-threads'],
     queryFn: () => api.getCommunicationThreads(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && hasCommunicationAccess,
     refetchInterval: 10000,
   });
 
@@ -55,7 +64,7 @@ export default function CommunicationPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !hasCommunicationAccess) {
     return null;
   }
 
@@ -138,4 +147,3 @@ function ThreadRow({
     </Link>
   );
 }
-

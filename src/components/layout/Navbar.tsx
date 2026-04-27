@@ -17,6 +17,8 @@ export function Navbar() {
   const isCasesRoute = pathname?.startsWith('/cases');
   const isFeedRoute = pathname?.startsWith('/feed');
   const isLawyer = user?.role === UserRole.LAWYER;
+  const hasCommunication =
+    user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
   const hasFinances = user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
   const isDarkMode = theme === 'dark';
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo.svg';
@@ -100,16 +102,18 @@ export function Navbar() {
                     Feed
                   </Link>
                 )}
-                <Link
-                  href="/communication"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                    pathname?.startsWith('/communication')
-                      ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                      : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
-                  }`}
-                >
-                  Communication
-                </Link>
+                {hasCommunication && (
+                  <Link
+                    href="/communication"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      pathname?.startsWith('/communication')
+                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
+                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                    }`}
+                  >
+                    Communication
+                  </Link>
+                )}
                 {hasFinances && (
                   <Link
                     href="/finances"
@@ -236,13 +240,15 @@ export function Navbar() {
                     Feed
                   </Link>
                 )}
-                <Link
-                  href="/communication"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Communication
-                </Link>
+                {hasCommunication && (
+                  <Link
+                    href="/communication"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Communication
+                  </Link>
+                )}
                 {hasFinances && (
                   <Link
                     href="/finances"

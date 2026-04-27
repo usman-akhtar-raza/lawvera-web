@@ -6,6 +6,7 @@ import { Loader2, MessageSquare, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useTheme } from '@/components/providers/ThemeProvider';
 import type { CaseCommunicationMessage } from '@/types';
 import { asUser } from '@/lib/type-guards';
 import { getErrorMessage } from '@/lib/error-message';
@@ -39,9 +40,11 @@ export function CaseCommunicationPanel({
   isEnabled: boolean;
 }) {
   const { user } = useAuthStore();
+  const { theme } = useTheme();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isDarkMode = theme === 'dark';
 
   const {
     data: communication,
@@ -147,7 +150,13 @@ export function CaseCommunicationPanel({
         )}
       </div>
 
-      <div className="mt-4 max-h-[400px] overflow-y-auto rounded-2xl border border-white/10 bg-[var(--surface-muted)] p-4">
+      <div
+        className={`mt-4 max-h-[400px] overflow-y-auto rounded-2xl border p-4 ${
+          isDarkMode
+            ? 'border-white/10 bg-[#0c1533]'
+            : 'border-white/10 bg-[var(--surface-muted)]'
+        }`}
+      >
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
@@ -168,8 +177,10 @@ export function CaseCommunicationPanel({
                   <div
                     className={`max-w-[85%] rounded-2xl border px-4 py-3 text-sm ${
                       isMine
-                        ? 'border-transparent bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205]'
-                        : 'border-white/10 bg-white/70 text-[var(--text-primary)]'
+                        ? 'border-transparent bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] shadow-sm'
+                        : isDarkMode
+                          ? 'border-[#2a3c74] bg-[#16244d] text-[#f4f7ff] shadow-sm shadow-black/20'
+                          : 'border-white/10 bg-white/80 text-[var(--text-primary)] shadow-sm'
                     }`}
                   >
                     <p className="text-xs font-semibold opacity-85">
@@ -213,7 +224,7 @@ export function CaseCommunicationPanel({
           <button
             type="submit"
             disabled={sendMutation.isPending || !draft.trim()}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-5 py-3 text-sm font-semibold text-[#1b1205] disabled:cursor-not-allowed disabled:opacity-50 sm:self-end"
+            className="inline-flex min-w-[7rem] shrink-0 whitespace-nowrap items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-5 py-3 text-sm font-semibold text-[#1b1205] disabled:cursor-not-allowed disabled:opacity-50 sm:self-end"
           >
             {sendMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -227,4 +238,3 @@ export function CaseCommunicationPanel({
     </div>
   );
 }
-
