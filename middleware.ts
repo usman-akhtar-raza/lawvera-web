@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACCESS_TOKEN_COOKIE_NAME } from '@/lib/auth/constants';
 
-type AppRole = 'client' | 'lawyer' | 'admin';
+type AppRole = 'client' | 'lawyer' | 'admin' | 'super_admin';
 
 const decodeJwtPayload = (
   token: string,
@@ -22,7 +22,7 @@ const decodeJwtPayload = (
 };
 
 const getDashboardForRole = (role: unknown): string | null => {
-  if (role === 'admin') {
+  if (role === 'admin' || role === 'super_admin') {
     return '/dashboard/admin';
   }
   if (role === 'lawyer') {
@@ -98,7 +98,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (payload.role === requiredRole) {
+  if (
+    payload.role === requiredRole ||
+    (requiredRole === 'admin' && payload.role === 'super_admin')
+  ) {
     return NextResponse.next();
   }
 

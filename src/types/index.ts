@@ -2,6 +2,7 @@ export enum UserRole {
   CLIENT = 'client',
   LAWYER = 'lawyer',
   ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
 }
 
 export enum BookingStatus {
@@ -320,6 +321,12 @@ export interface SearchCaseFeedParams {
   category?: CaseCategory;
 }
 
+export interface UserSearchParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -327,4 +334,9 @@ export interface PaginatedResponse<T> {
     page: number;
     limit: number;
   };
+}
+
+export interface AdminUserDetailResponse {
+  user: User;
+  lawyerProfile: LawyerProfile | null;
 }

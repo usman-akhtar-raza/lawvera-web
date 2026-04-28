@@ -14,14 +14,46 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import type { Booking, LawyerProfile } from '@/types';
+import { UserRole, type Booking, type LawyerProfile, type User } from '@/types';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { asLawyerProfile, asUser } from '@/lib/type-guards';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
+import { isAdminRole } from '@/lib/role-utils';
+
+type ManagedUserFormState = {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  city: string;
+  phone: string;
+  specialization: string;
+  experienceYears: string;
+  consultationFee: string;
+  education: string;
+  description: string;
+};
+
+const EMPTY_MANAGED_USER_FORM: ManagedUserFormState = {
+  name: '',
+  email: '',
+  password: '',
+  role: UserRole.CLIENT,
+  city: '',
+  phone: '',
+  specialization: '',
+  experienceYears: '',
+  consultationFee: '',
+  education: '',
+  description: '',
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const hasAdminAccess = isAdminRole(user?.role);
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bookForm, setBookForm] = useState({
     title: '',
@@ -30,29 +62,41 @@ export default function AdminDashboard() {
     language: '',
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [managedUserForm, setManagedUserForm] =
+    useState<ManagedUserFormState>(EMPTY_MANAGED_USER_FORM);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
-      router.push('/auth/login?redirect=/dashboard/admin');
+    if (authLoading) {
+      return;
     }
-  }, [isAuthenticated, authLoading, user, router]);
+
+    if (!isAuthenticated) {
+      router.push('/auth/login?redirect=/dashboard/admin');
+      return;
+    }
+
+    if (user && !hasAdminAccess) {
+      router.push(getDashboardRouteForRole(user.role));
+    }
+  }, [authLoading, hasAdminAccess, isAuthenticated, router, user]);
 
   const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ['admin-overview'],
     queryFn: () => api.getAdminOverview(),
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && hasAdminAccess,
   });
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
     queryKey: ['admin-bookings'],
     queryFn: () => api.getAllBookings(),
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && hasAdminAccess,
   });
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['admin-analytics'],
     queryFn: () => api.getAnalytics(),
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && hasAdminAccess,
   });
 
   const {
@@ -62,7 +106,17 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['admin-law-sources'],
     queryFn: () => api.listLawSources(),
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && hasAdminAccess,
+  });
+
+  const {
+    data: adminUsers,
+    isLoading: adminUsersLoading,
+    refetch: refetchAdminUsers,
+  } = useQuery({
+    queryKey: ['super-admin-users'],
+    queryFn: () => api.getAdminUsers(),
+    enabled: isAuthenticated && isSuperAdmin,
   });
 
   const handleApprove = async (lawyerId: string) => {
@@ -139,12 +193,48 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleManagedUserCreate = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    setIsCreatingUser(true);
+
+    try {
+      await api.createManagedUser({
+        name: managedUserForm.name,
+        email: managedUserForm.email,
+        password: managedUserForm.password,
+        role: managedUserForm.role,
+        city: managedUserForm.city || undefined,
+        phone: managedUserForm.phone || undefined,
+        specialization: managedUserForm.specialization || undefined,
+        experienceYears: managedUserForm.experienceYears
+          ? Number(managedUserForm.experienceYears)
+          : undefined,
+        consultationFee: managedUserForm.consultationFee
+          ? Number(managedUserForm.consultationFee)
+          : undefined,
+        education: managedUserForm.education || undefined,
+        description: managedUserForm.description || undefined,
+      });
+      toast.success(`${managedUserForm.role.replace('_', ' ')} account created`);
+      setManagedUserForm(EMPTY_MANAGED_USER_FORM);
+      refetchAdminUsers();
+      refetchOverview();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to create managed user'));
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
   if (
     authLoading ||
     overviewLoading ||
     bookingsLoading ||
     analyticsLoading ||
-    lawSourcesLoading
+    lawSourcesLoading ||
+    (isSuperAdmin && adminUsersLoading)
   ) {
     return (
       <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
@@ -153,7 +243,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!isAuthenticated || !hasAdminAccess) {
     return null;
   }
 
@@ -165,11 +255,228 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">
+            {isSuperAdmin ? 'Super Admin Dashboard' : 'Admin Dashboard'}
+          </h1>
           <p className="text-[var(--text-secondary)] mt-2">
-            Manage lawyers and bookings
+            {isSuperAdmin
+              ? 'Manage admins, create platform users, and access all admin tools'
+              : 'Manage lawyers and bookings'}
           </p>
         </div>
+
+        {isSuperAdmin && (
+          <div className="grid gap-8 mb-8 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className="brand-card p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Create Managed User</h2>
+                <span className="rounded-full border border-[#d5b47f]/40 bg-[var(--brand-accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b07a43]">
+                  Super admin only
+                </span>
+              </div>
+
+              <form onSubmit={handleManagedUserCreate} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input
+                    type="text"
+                    value={managedUserForm.name}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="Full name"
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    required
+                  />
+                  <input
+                    type="email"
+                    value={managedUserForm.email}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="Email"
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    required
+                  />
+                  <input
+                    type="password"
+                    value={managedUserForm.password}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Temporary password"
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    required
+                  />
+                  <select
+                    value={managedUserForm.role}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        role: event.target.value as UserRole,
+                      }))
+                    }
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                  >
+                    <option value={UserRole.CLIENT}>User</option>
+                    <option value={UserRole.LAWYER}>Lawyer</option>
+                    <option value={UserRole.ADMIN}>Admin</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={managedUserForm.city}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        city: event.target.value,
+                      }))
+                    }
+                    placeholder="City"
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    required={managedUserForm.role === UserRole.LAWYER}
+                  />
+                  <input
+                    type="text"
+                    value={managedUserForm.phone}
+                    onChange={(event) =>
+                      setManagedUserForm((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="Phone"
+                    className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                  />
+                </div>
+
+                {managedUserForm.role === UserRole.LAWYER && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <input
+                      type="text"
+                      value={managedUserForm.specialization}
+                      onChange={(event) =>
+                        setManagedUserForm((prev) => ({
+                          ...prev,
+                          specialization: event.target.value,
+                        }))
+                      }
+                      placeholder="Specialization"
+                      className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                      required
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      value={managedUserForm.experienceYears}
+                      onChange={(event) =>
+                        setManagedUserForm((prev) => ({
+                          ...prev,
+                          experienceYears: event.target.value,
+                        }))
+                      }
+                      placeholder="Experience years"
+                      className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                      required
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      value={managedUserForm.consultationFee}
+                      onChange={(event) =>
+                        setManagedUserForm((prev) => ({
+                          ...prev,
+                          consultationFee: event.target.value,
+                        }))
+                      }
+                      placeholder="Consultation fee"
+                      className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                      required
+                    />
+                    <input
+                      type="text"
+                      value={managedUserForm.education}
+                      onChange={(event) =>
+                        setManagedUserForm((prev) => ({
+                          ...prev,
+                          education: event.target.value,
+                        }))
+                      }
+                      placeholder="Education"
+                      className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    />
+                    <textarea
+                      value={managedUserForm.description}
+                      onChange={(event) =>
+                        setManagedUserForm((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Lawyer profile description"
+                      className="md:col-span-2 min-h-28 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isCreatingUser}
+                    className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-4 py-2 text-sm font-semibold text-[#1b1205] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isCreatingUser ? 'Creating...' : 'Create User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="brand-card p-6">
+              <h2 className="text-xl font-semibold mb-5">Admin Accounts</h2>
+              <div className="space-y-3">
+                {(adminUsers || []).length > 0 ? (
+                  (adminUsers || []).map((adminUser: User) => (
+                    <div
+                      key={adminUser._id}
+                      className="rounded-xl border border-white/10 bg-white/5 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{adminUser.name}</p>
+                          <p className="text-sm text-[var(--text-secondary)]">
+                            {adminUser.email}
+                          </p>
+                          <p className="mt-2 text-xs text-[var(--text-muted)]">
+                            Created{' '}
+                            {adminUser.createdAt
+                              ? new Date(adminUser.createdAt).toLocaleDateString()
+                              : 'recently'}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#b07a43]">
+                          {adminUser.role === UserRole.SUPER_ADMIN
+                            ? 'Super Admin'
+                            : 'Admin'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[var(--text-muted)]">
+                    No admin accounts found.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="brand-card p-6">

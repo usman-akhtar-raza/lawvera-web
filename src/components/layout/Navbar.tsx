@@ -9,6 +9,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { getRoleDisplayName } from '@/lib/role-display';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
+import { isAdminRole } from '@/lib/role-utils';
 export function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -18,6 +20,10 @@ export function Navbar() {
   const isCasesRoute = pathname?.startsWith('/cases');
   const isFeedRoute = pathname?.startsWith('/feed');
   const isLawyer = user?.role === UserRole.LAWYER;
+  const hasAdminAccess = isAdminRole(user?.role);
+  const isAdminUsersRoute = pathname?.startsWith('/dashboard/admin/users');
+  const isDashboardRoute =
+    pathname?.startsWith('/dashboard') && !isAdminUsersRoute;
   const hasCommunication =
     user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
   const hasFinances = user?.role === UserRole.CLIENT || user?.role === UserRole.LAWYER;
@@ -49,9 +55,7 @@ export function Navbar() {
 
   const getDashboardLink = () => {
     if (!user) return '/auth/login';
-    if (user.role === UserRole.ADMIN) return '/dashboard/admin';
-    if (user.role === UserRole.LAWYER) return '/dashboard/lawyer';
-    return '/dashboard/client';
+    return getDashboardRouteForRole(user.role);
   };
 
   return (
@@ -139,10 +143,22 @@ export function Navbar() {
                     Finances
                   </Link>
                 )}
+                {hasAdminAccess && (
+                  <Link
+                    href="/dashboard/admin/users"
+                    className={`${desktopNavLinkClass} ${
+                      isAdminUsersRoute
+                        ? activeDesktopNavLinkClass
+                        : inactiveDesktopNavLinkClass
+                    }`}
+                  >
+                    Users
+                  </Link>
+                )}
                 <Link
                   href={getDashboardLink()}
                   className={`${desktopNavLinkClass} ${
-                    pathname?.startsWith('/dashboard')
+                    isDashboardRoute
                       ? activeDesktopNavLinkClass
                       : inactiveDesktopNavLinkClass
                   }`}
@@ -274,6 +290,15 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Finances
+                  </Link>
+                )}
+                {hasAdminAccess && (
+                  <Link
+                    href="/dashboard/admin/users"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${mobileHoverClass}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Users
                   </Link>
                 )}
                 <Link

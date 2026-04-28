@@ -23,6 +23,9 @@ import type {
   CaseStatus,
   CaseAnalytics,
   SearchCaseFeedParams,
+  UserSearchParams,
+  AdminUserDetailResponse,
+  UserRole,
 } from '@/types';
 import {
   clearTokens,
@@ -448,6 +451,40 @@ class ApiClient {
     today: number;
   }> {
     const response = await this.client.get('/bookings/admin/analytics');
+    return response.data;
+  }
+
+  async getAdminUsers(): Promise<User[]> {
+    const response = await this.client.get('/users/admins');
+    return response.data;
+  }
+
+  async searchUsers(
+    params: UserSearchParams,
+  ): Promise<PaginatedResponse<User>> {
+    const response = await this.client.get('/users', { params });
+    return response.data;
+  }
+
+  async getUserById(id: string): Promise<AdminUserDetailResponse> {
+    const response = await this.client.get(`/users/${id}`);
+    return response.data;
+  }
+
+  async createManagedUser(data: {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    city?: string;
+    phone?: string;
+    specialization?: string;
+    experienceYears?: number;
+    consultationFee?: number;
+    education?: string;
+    description?: string;
+  }): Promise<{ user: User; lawyerProfile?: LawyerProfile | null }> {
+    const response = await this.client.post('/users/managed', data);
     return response.data;
   }
 

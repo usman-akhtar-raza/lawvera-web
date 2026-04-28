@@ -12,6 +12,7 @@ import {
   UserRole,
   type CaseCommunicationThreadSummary,
 } from '@/types';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
 
 const STATUS_LABEL: Record<CaseStatus, string> = {
   [CaseStatus.OPEN]: 'Open',
@@ -45,9 +46,9 @@ export default function CommunicationPage() {
       router.push('/auth/login?redirect=/communication');
     }
     if (!authLoading && isAuthenticated && !hasCommunicationAccess) {
-      router.push('/dashboard/admin');
+      router.push(getDashboardRouteForRole(user?.role));
     }
-  }, [authLoading, hasCommunicationAccess, isAuthenticated, router]);
+  }, [authLoading, hasCommunicationAccess, isAuthenticated, router, user?.role]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['communication-threads'],

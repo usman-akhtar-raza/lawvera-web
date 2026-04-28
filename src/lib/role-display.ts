@@ -1,4 +1,5 @@
 import { UserRole } from '@/types';
+import { isAdminRole } from '@/lib/role-utils';
 
 export const getRoleDisplayName = (role?: UserRole | string | null): string => {
   if (!role) {
@@ -13,7 +14,11 @@ export const getRoleDisplayName = (role?: UserRole | string | null): string => {
     return 'Lawyer';
   }
 
-  if (role === UserRole.ADMIN || role === 'admin') {
+  if (role === UserRole.SUPER_ADMIN || role === 'super_admin') {
+    return 'Super Admin';
+  }
+
+  if (isAdminRole(role)) {
     return 'Admin';
   }
 

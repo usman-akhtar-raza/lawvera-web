@@ -1,9 +1,10 @@
 import { UserRole } from '@/types';
+import { isAdminRole } from '@/lib/role-utils';
 
 type AppRole = UserRole | null | undefined;
 
 export const getDashboardRouteForRole = (role: AppRole): string => {
-  if (role === UserRole.ADMIN) {
+  if (isAdminRole(role)) {
     return '/dashboard/admin';
   }
 

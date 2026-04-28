@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import type { AuthResponse, ProfileSwitchStatus } from '@/types';
+import { isAdminRole } from '@/lib/role-utils';
 
 const themeOptions = [
   {
@@ -155,7 +156,7 @@ export default function ProfileSettingsPage() {
   }, [isAuthenticated, isLawyer, lawyerProfile, setLawyerProfile]);
 
   useEffect(() => {
-    if (!isAuthenticated || !userRole || userRole === 'admin') {
+    if (!isAuthenticated || !userRole || isAdminRole(userRole)) {
       setSwitchStatus(null);
       setIsSwitchStatusLoading(false);
       return;
@@ -445,7 +446,7 @@ export default function ProfileSettingsPage() {
         </section>
 
         {/* ── Lawyer toggle section (hidden for admin) ── */}
-        {userRole !== 'admin' && (
+        {!isAdminRole(userRole) && (
           <section className="brand-card p-6 space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>

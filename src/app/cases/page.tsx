@@ -11,6 +11,7 @@ import { CaseStatus, UserRole } from '@/types';
 import type { LegalCase } from '@/types';
 import { format } from 'date-fns';
 import { asUser, asLawyerProfile } from '@/lib/type-guards';
+import { isAdminRole } from '@/lib/role-utils';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: string }> = {
   [CaseStatus.OPEN]: { label: 'Open', color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -40,7 +41,7 @@ export default function CasesPage() {
   }, [isAuthenticated, authLoading, router]);
 
   const isLawyer = user?.role === UserRole.LAWYER;
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = isAdminRole(user?.role);
   const isClient = user?.role === UserRole.CLIENT;
 
   const { data: cases, isLoading } = useQuery({
@@ -183,7 +184,7 @@ function CaseCard({
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);
   const isLawyer = userRole === UserRole.LAWYER;
-  const isAdmin = userRole === UserRole.ADMIN;
+  const isAdmin = isAdminRole(userRole);
   const isLiveOpenCase = isLawyer && legalCase.status === CaseStatus.OPEN && !lawyer;
 
   return (

@@ -22,6 +22,7 @@ import { asUser, asLawyerProfile } from '@/lib/type-guards';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { CaseCommunicationPanel } from '@/components/communication/CaseCommunicationPanel';
+import { isAdminRole } from '@/lib/role-utils';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: string }> = {
   [CaseStatus.OPEN]: { label: 'Open', color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -139,7 +140,7 @@ export default function CaseDetailPage() {
 
   const isClient = user?.role === UserRole.CLIENT;
   const isLawyer = user?.role === UserRole.LAWYER;
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = isAdminRole(user?.role);
   const lawyer = asLawyerProfile(legalCase.lawyer);
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);

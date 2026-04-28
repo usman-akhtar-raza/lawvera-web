@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error-message';
 import { useAuthStore } from '@/store/auth';
 import { UserRole, type FinanceTransaction } from '@/types';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
 
 const formatMoney = (amountMinor: number, currency: string) =>
   new Intl.NumberFormat('en-PK', {
@@ -123,9 +124,9 @@ export default function FinancesPage() {
     }
 
     if (!isAllowedRole) {
-      router.push('/dashboard/admin');
+      router.push(getDashboardRouteForRole(user?.role));
     }
-  }, [authLoading, isAuthenticated, isAllowedRole, router]);
+  }, [authLoading, isAuthenticated, isAllowedRole, router, user?.role]);
 
   const {
     data: finances,
