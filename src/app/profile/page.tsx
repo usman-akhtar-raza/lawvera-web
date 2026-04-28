@@ -61,15 +61,22 @@ interface LawyerApplyForm {
   description?: string;
 }
 
+interface LawyerFeeForm {
+  consultationFee: number;
+}
+
 export default function ProfileSettingsPage() {
   const { user, lawyerProfile, isAuthenticated, setAuth, setLawyerProfile } = useAuthStore();
   const { theme, setTheme, toggleTheme } = useTheme();
+  const userRole = user?.role;
+  const userId = user?._id;
 
   // true = form is open (only relevant when user is a client)
   const [formOpen, setFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isAvailabilitySaving, setIsAvailabilitySaving] = useState(false);
   const [switchStatus, setSwitchStatus] = useState<ProfileSwitchStatus | null>(null);
   const [isSwitchStatusLoading, setIsSwitchStatusLoading] = useState(false);
@@ -77,14 +84,25 @@ export default function ProfileSettingsPage() {
     createEmptyAvailability(),
   );
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<LawyerApplyForm>();
+  const {
+    register: registerLawyerApplication,
+    handleSubmit: handleLawyerApplicationSubmit,
+    formState: { errors: lawyerApplicationErrors },
+    reset: resetLawyerApplicationForm,
+  } = useForm<LawyerApplyForm>();
+  const {
+    register: registerLawyerFee,
+    handleSubmit: handleLawyerFeeSubmit,
+    formState: { errors: lawyerFeeErrors },
+    reset: resetLawyerFeeForm,
+  } = useForm<LawyerFeeForm>();
 
   const inputClass =
     'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] text-sm';
   const labelClass = 'block text-sm font-medium text-[var(--text-secondary)]';
 
-  const isClient  = user?.role === 'client';
-  const isLawyer  = user?.role === 'lawyer';
+  const isClient  = userRole === 'client';
+  const isLawyer  = userRole === 'lawyer';
   const hasStoredLawyerProfile = Boolean(
     lawyerProfile || switchStatus?.hasStoredLawyerProfile,
   );
@@ -109,6 +127,12 @@ export default function ProfileSettingsPage() {
   }, [isLawyer, lawyerProfile]);
 
   useEffect(() => {
+    if (isLawyer && lawyerProfile) {
+      resetLawyerFeeForm({ consultationFee: lawyerProfile.consultationFee });
+    }
+  }, [isLawyer, lawyerProfile, resetLawyerFeeForm]);
+
+  useEffect(() => {
     if (!isAuthenticated || !isLawyer || lawyerProfile) {
       return;
     }
@@ -131,7 +155,7 @@ export default function ProfileSettingsPage() {
   }, [isAuthenticated, isLawyer, lawyerProfile, setLawyerProfile]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role === 'admin') {
+    if (!isAuthenticated || !userRole || userRole === 'admin') {
       setSwitchStatus(null);
       setIsSwitchStatusLoading(false);
       return;
@@ -161,7 +185,7 @@ export default function ProfileSettingsPage() {
     return () => {
       isActive = false;
     };
-  }, [isAuthenticated, user?._id, user?.role]);
+  }, [isAuthenticated, userId, userRole]);
 
   const handleToggle = () => {
     if (isSwitchStatusLoading) {
@@ -226,11 +250,27 @@ export default function ProfileSettingsPage() {
       toast.success('Application submitted! Pending admin approval.');
       setFormOpen(false);
       setAvailability(createEmptyAvailability());
-      reset();
+      resetLawyerApplicationForm();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to submit application.'));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleLawyerFeeSave = async (data: LawyerFeeForm) => {
+    setIsProfileSaving(true);
+    try {
+      const updatedProfile = await api.updateMyLawyerProfile({
+        consultationFee: Number(data.consultationFee),
+      });
+      setLawyerProfile(updatedProfile);
+      resetLawyerFeeForm({ consultationFee: updatedProfile.consultationFee });
+      toast.success('Consultation fee updated successfully.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update consultation fee.'));
+    } finally {
+      setIsProfileSaving(false);
     }
   };
 
@@ -405,7 +445,7 @@ export default function ProfileSettingsPage() {
         </section>
 
         {/* ── Lawyer toggle section (hidden for admin) ── */}
-        {user?.role !== 'admin' && (
+        {userRole !== 'admin' && (
           <section className="brand-card p-6 space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -454,12 +494,12 @@ export default function ProfileSettingsPage() {
 
             {/* CLIENT: apply form */}
             {isClient && formOpen && (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-2 border-t border-white/10">
+              <form onSubmit={handleLawyerApplicationSubmit(onSubmit)} className="space-y-6 pt-2 border-t border-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className={labelClass}>Specialization *</label>
                     <select
-                      {...register('specialization', { required: 'Specialization is required' })}
+                      {...registerLawyerApplication('specialization', { required: 'Specialization is required' })}
                       className={inputClass}
                     >
                       <option value="">Select specialization</option>
@@ -467,15 +507,15 @@ export default function ProfileSettingsPage() {
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
-                    {errors.specialization && (
-                      <p className="mt-1 text-sm text-red-500">{errors.specialization.message}</p>
+                    {lawyerApplicationErrors.specialization && (
+                      <p className="mt-1 text-sm text-red-500">{lawyerApplicationErrors.specialization.message}</p>
                     )}
                   </div>
 
                   <div>
                     <label className={labelClass}>Experience (Years) *</label>
                     <input
-                      {...register('experienceYears', {
+                      {...registerLawyerApplication('experienceYears', {
                         required: 'Experience is required',
                         valueAsNumber: true,
                         min: { value: 0, message: 'Must be 0 or more' },
@@ -483,27 +523,27 @@ export default function ProfileSettingsPage() {
                       type="number"
                       className={inputClass}
                     />
-                    {errors.experienceYears && (
-                      <p className="mt-1 text-sm text-red-500">{errors.experienceYears.message}</p>
+                    {lawyerApplicationErrors.experienceYears && (
+                      <p className="mt-1 text-sm text-red-500">{lawyerApplicationErrors.experienceYears.message}</p>
                     )}
                   </div>
 
                   <div>
                     <label className={labelClass}>City *</label>
                     <input
-                      {...register('city', { required: 'City is required' })}
+                      {...registerLawyerApplication('city', { required: 'City is required' })}
                       type="text"
                       className={inputClass}
                     />
-                    {errors.city && (
-                      <p className="mt-1 text-sm text-red-500">{errors.city.message}</p>
+                    {lawyerApplicationErrors.city && (
+                      <p className="mt-1 text-sm text-red-500">{lawyerApplicationErrors.city.message}</p>
                     )}
                   </div>
 
                   <div>
                     <label className={labelClass}>Consultation Fee ($) *</label>
                     <input
-                      {...register('consultationFee', {
+                      {...registerLawyerApplication('consultationFee', {
                         required: 'Fee is required',
                         valueAsNumber: true,
                         min: { value: 0, message: 'Must be 0 or more' },
@@ -511,8 +551,8 @@ export default function ProfileSettingsPage() {
                       type="number"
                       className={inputClass}
                     />
-                    {errors.consultationFee && (
-                      <p className="mt-1 text-sm text-red-500">{errors.consultationFee.message}</p>
+                    {lawyerApplicationErrors.consultationFee && (
+                      <p className="mt-1 text-sm text-red-500">{lawyerApplicationErrors.consultationFee.message}</p>
                     )}
                   </div>
                 </div>
@@ -520,7 +560,7 @@ export default function ProfileSettingsPage() {
                 <div>
                   <label className={labelClass}>Education</label>
                   <textarea
-                    {...register('education')}
+                    {...registerLawyerApplication('education')}
                     rows={2}
                     className={inputClass}
                     placeholder="e.g., LLB from Harvard Law School"
@@ -530,7 +570,7 @@ export default function ProfileSettingsPage() {
                 <div>
                   <label className={labelClass}>Description / About</label>
                   <textarea
-                    {...register('description')}
+                    {...registerLawyerApplication('description')}
                     rows={3}
                     className={inputClass}
                     placeholder="Tell clients about your practice and expertise..."
@@ -588,7 +628,7 @@ export default function ProfileSettingsPage() {
                     onClick={() => {
                       setFormOpen(false);
                       setAvailability(createEmptyAvailability());
-                      reset();
+                      resetLawyerApplicationForm();
                     }}
                     className="px-4 py-2.5 rounded-lg text-sm border border-white/10 text-[var(--text-secondary)] hover:border-white/20"
                   >
@@ -672,6 +712,51 @@ export default function ProfileSettingsPage() {
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] pt-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#d5b47f] border-t-transparent" />
                 Restoring your saved lawyer profile…
+              </div>
+            )}
+
+            {isLawyer && lawyerProfile && (
+              <div className="space-y-4 pt-2 border-t border-white/10">
+                <div>
+                  <p className="font-semibold">Professional Details</p>
+                  <p className="text-sm text-[var(--text-muted)] mt-0.5">
+                    Update your consultation fee shown to clients on your profile.
+                  </p>
+                </div>
+
+                <form
+                  onSubmit={handleLawyerFeeSubmit(handleLawyerFeeSave)}
+                  className="grid gap-4 sm:grid-cols-[minmax(0,16rem)_auto] sm:items-end"
+                >
+                  <div>
+                    <label className={labelClass}>Consultation Fee (PKR)</label>
+                    <input
+                      {...registerLawyerFee('consultationFee', {
+                        required: 'Fee is required',
+                        valueAsNumber: true,
+                        min: { value: 0, message: 'Must be 0 or more' },
+                      })}
+                      type="number"
+                      min={0}
+                      className={inputClass}
+                    />
+                    {lawyerFeeErrors.consultationFee && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {lawyerFeeErrors.consultationFee.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-start sm:justify-end">
+                    <button
+                      type="submit"
+                      disabled={isProfileSaving}
+                      className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isProfileSaving ? 'Saving…' : 'Save Fee'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 

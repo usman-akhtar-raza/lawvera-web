@@ -268,6 +268,13 @@ class ApiClient {
     return response.data;
   }
 
+  async updateMyLawyerProfile(data: {
+    consultationFee: number;
+  }): Promise<LawyerProfile> {
+    const response = await this.client.patch('/lawyers/me/profile', data);
+    return response.data;
+  }
+
   async updateAvailability(
     availability: Array<{ day: string; slots: string[] }>,
   ): Promise<LawyerProfile> {
