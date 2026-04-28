@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import {
   useParams,
   usePathname,
@@ -68,6 +68,14 @@ const getRoleBadgeClass = (role?: UserRole) => {
 };
 
 export default function AdminUserDetailPage() {
+  return (
+    <Suspense fallback={<AdminUserDetailPageFallback />}>
+      <AdminUserDetailPageContent />
+    </Suspense>
+  );
+}
+
+function AdminUserDetailPageContent() {
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
   const router = useRouter();
@@ -342,6 +350,14 @@ export default function AdminUserDetailPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AdminUserDetailPageFallback() {
+  return (
+    <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
+      <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#d5b47f]" />
     </div>
   );
 }

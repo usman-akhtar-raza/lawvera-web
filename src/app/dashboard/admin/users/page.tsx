@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Eye, Search, Users, X } from 'lucide-react';
@@ -50,6 +50,14 @@ const parsePage = (value: string | null) => {
 };
 
 export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<AdminUsersPageFallback />}>
+      <AdminUsersPageContent />
+    </Suspense>
+  );
+}
+
+function AdminUsersPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -345,6 +353,14 @@ export default function AdminUsersPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function AdminUsersPageFallback() {
+  return (
+    <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
+      <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#d5b47f]" />
     </div>
   );
 }
