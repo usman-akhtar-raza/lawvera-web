@@ -1,13 +1,13 @@
 import { UserRole } from '@/types';
 
-type AppRole = UserRole | 'client' | 'lawyer' | 'admin' | null | undefined;
+type AppRole = UserRole | null | undefined;
 
 export const getDashboardRouteForRole = (role: AppRole): string => {
-  if (role === UserRole.ADMIN || role === 'admin') {
+  if (role === UserRole.ADMIN) {
     return '/dashboard/admin';
   }
 
-  if (role === UserRole.LAWYER || role === 'lawyer') {
+  if (role === UserRole.LAWYER) {
     return '/dashboard/lawyer';
   }
 
