@@ -14,6 +14,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const isLawyersRoute = pathname?.startsWith('/lawyers');
   const isCasesRoute = pathname?.startsWith('/cases');
   const isFeedRoute = pathname?.startsWith('/feed');
   const isLawyer = user?.role === UserRole.LAWYER;
@@ -34,6 +35,12 @@ export function Navbar() {
     : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[#b07a43]';
   const mobileMenuBgClass = isDarkMode ? 'bg-[#050c26]' : 'bg-white/90';
   const mobileHoverClass = isDarkMode ? 'hover:bg-white/5' : 'hover:bg-[var(--brand-accent-soft)]';
+  const desktopNavLinkClass =
+    'whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-all';
+  const activeDesktopNavLinkClass =
+    'border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] text-[#b07a43] shadow-lg shadow-[#d5b47f]/10';
+  const inactiveDesktopNavLinkClass =
+    'text-[var(--text-secondary)] hover:text-[#b07a43]';
 
   const handleLogout = () => {
     logout();
@@ -51,17 +58,23 @@ export function Navbar() {
     <nav className={`sticky top-0 z-50 ${navBackgroundClass} backdrop-blur-xl py-2`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 text-[var(--text-primary)]">
-          <div className="flex items-center">
-            <Image src={logoSrc} alt="Logo" width={199} height={50} />
+          <div className="flex shrink-0 items-center">
+            <Image
+              src={logoSrc}
+              alt="Logo"
+              width={199}
+              height={50}
+              className="h-auto w-[158px] xl:w-[178px] 2xl:w-[199px]"
+            />
           </div>
 
-          <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-1 xl:flex 2xl:gap-2">
             <Link
               href="/lawyers"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                pathname === '/lawyers'
-                  ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                  : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+              className={`${desktopNavLinkClass} ${
+                isLawyersRoute
+                  ? activeDesktopNavLinkClass
+                  : inactiveDesktopNavLinkClass
               }`}
             >
               Find Lawyers
@@ -70,7 +83,7 @@ export function Navbar() {
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle color theme"
-              className={`rounded-full border border-white/10 p-2 shadow-sm transition ${themeToggleBtnClass}`}
+              className={`shrink-0 rounded-full border border-white/10 p-2 shadow-sm transition ${themeToggleBtnClass}`}
             >
               {theme === 'dark' ? (
                 <Sun className="h-4 w-4" />
@@ -82,10 +95,10 @@ export function Navbar() {
               <>
                 <Link
                   href="/cases"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={`${desktopNavLinkClass} ${
                     isCasesRoute
-                      ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                      : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                      ? activeDesktopNavLinkClass
+                      : inactiveDesktopNavLinkClass
                   }`}
                 >
                   Cases
@@ -93,10 +106,10 @@ export function Navbar() {
                 {isLawyer && (
                   <Link
                     href="/feed"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`${desktopNavLinkClass} ${
                       isFeedRoute
-                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                        ? activeDesktopNavLinkClass
+                        : inactiveDesktopNavLinkClass
                     }`}
                   >
                     Feed
@@ -105,10 +118,10 @@ export function Navbar() {
                 {hasCommunication && (
                   <Link
                     href="/communication"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`${desktopNavLinkClass} ${
                       pathname?.startsWith('/communication')
-                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                        ? activeDesktopNavLinkClass
+                        : inactiveDesktopNavLinkClass
                     }`}
                   >
                     Communication
@@ -117,10 +130,10 @@ export function Navbar() {
                 {hasFinances && (
                   <Link
                     href="/finances"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`${desktopNavLinkClass} ${
                       pathname?.startsWith('/finances')
-                        ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                        : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                        ? activeDesktopNavLinkClass
+                        : inactiveDesktopNavLinkClass
                     }`}
                   >
                     Finances
@@ -128,19 +141,24 @@ export function Navbar() {
                 )}
                 <Link
                   href={getDashboardLink()}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={`${desktopNavLinkClass} ${
                     pathname?.startsWith('/dashboard')
-                      ? 'text-[#b07a43] bg-[var(--brand-accent-soft)] border border-[#d5b47f]/30 shadow-lg shadow-[#d5b47f]/10'
-                      : 'text-[var(--text-secondary)] hover:text-[#b07a43]'
+                      ? activeDesktopNavLinkClass
+                      : inactiveDesktopNavLinkClass
                   }`}
                 >
                   Dashboard
                 </Link>
-                <div className="relative group">
-                  <button className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-[var(--text-secondary)] hover:text-[#d5b47f]">
+                <div className="relative shrink-0 group">
+                  <button
+                    aria-label="Open account menu"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[#d5b47f]"
+                  >
                     <User className="h-5 w-5" />
-                    <span>{user?.name}</span>
-                    <span className="rounded-full border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[#b07a43]">
+                    <span className="hidden max-w-[9rem] truncate 2xl:inline">
+                      {user?.name}
+                    </span>
+                    <span className="hidden rounded-full border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[#b07a43] 2xl:inline-flex">
                       {getRoleDisplayName(user?.role)}
                     </span>
                   </button>
@@ -168,13 +186,13 @@ export function Navbar() {
               <>
                 <Link
                   href="/auth/login"
-                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[#d5b47f]"
+                  className="whitespace-nowrap px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[#d5b47f]"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="navbar-signup-button px-4 py-2 rounded-md text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] shadow-lg shadow-[#d5b47f]/20 hover:shadow-[#d5b47f]/40 transition-all"
+                  className="navbar-signup-button whitespace-nowrap px-4 py-2 rounded-md text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] via-[#e6c891] to-[#d5b47f] shadow-lg shadow-[#d5b47f]/20 hover:shadow-[#d5b47f]/40 transition-all"
                 >
                   Sign Up
                 </Link>
@@ -183,7 +201,7 @@ export function Navbar() {
           </div>
 
           <button
-            className="lg:hidden p-2 text-[var(--text-primary)]"
+            className="p-2 text-[var(--text-primary)] xl:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -196,7 +214,7 @@ export function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className={`lg:hidden border-t border-white/10 ${mobileMenuBgClass}`}>
+        <div className={`border-t border-white/10 xl:hidden ${mobileMenuBgClass}`}>
           <div className="px-2 pt-2 pb-3 space-y-1 text-[var(--text-secondary)]">
             <Link
               href="/lawyers"
