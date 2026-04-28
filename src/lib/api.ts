@@ -471,6 +471,27 @@ class ApiClient {
     return response.data;
   }
 
+  async updateManagedUserRole(
+    id: string,
+    role: UserRole,
+  ): Promise<AdminUserDetailResponse> {
+    const response = await this.client.patch(`/users/${id}/role`, { role });
+    return response.data;
+  }
+
+  async updateManagedUserStatus(
+    id: string,
+    isActive: boolean,
+  ): Promise<AdminUserDetailResponse> {
+    const response = await this.client.patch(`/users/${id}/status`, { isActive });
+    return response.data;
+  }
+
+  async deleteManagedUser(id: string): Promise<{ success: true }> {
+    const response = await this.client.delete(`/users/${id}`);
+    return response.data;
+  }
+
   async createManagedUser(data: {
     name: string;
     email: string;

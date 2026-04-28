@@ -258,6 +258,7 @@ function AdminUsersPageContent() {
                       <th className="px-6 py-4 font-semibold">Name</th>
                       <th className="px-6 py-4 font-semibold">Email</th>
                       <th className="px-6 py-4 font-semibold">Role</th>
+                      <th className="px-6 py-4 font-semibold">Status</th>
                       <th className="px-6 py-4 font-semibold">City</th>
                       <th className="px-6 py-4 font-semibold">Joined</th>
                       <th className="px-6 py-4 text-right font-semibold">
@@ -266,11 +267,14 @@ function AdminUsersPageContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {accounts.map((account) => (
-                      <tr
-                        key={account._id}
-                        className="transition-colors hover:bg-white/5"
-                      >
+                    {accounts.map((account) => {
+                      const isAccountActive = account.isActive !== false;
+
+                      return (
+                        <tr
+                          key={account._id}
+                          className="transition-colors hover:bg-white/5"
+                        >
                         <td className="px-6 py-4">
                           <div className="font-semibold text-[var(--text-primary)]">
                             <Link
@@ -291,23 +295,37 @@ function AdminUsersPageContent() {
                             {getRoleDisplayName(account.role)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[var(--text-secondary)]">
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                              isAccountActive
+                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                                : 'border-amber-500/20 bg-amber-500/10 text-amber-300'
+                            }`}
+                          >
+                            {isAccountActive ? 'Active' : 'Disabled'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
                           {account.city || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 text-[var(--text-secondary)]">
+                        <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
                           {formatDate(account.createdAt)}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <Link
-                            href={buildUserHref(account)}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[#d5b47f]/40 hover:text-[#d5b47f]"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Link>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex justify-end">
+                            <Link
+                              href={buildUserHref(account)}
+                              className="inline-flex min-w-[6.5rem] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[#d5b47f]/40 hover:text-[#d5b47f]"
+                            >
+                              <Eye className="h-4 w-4 shrink-0" />
+                              View
+                            </Link>
+                          </div>
                         </td>
-                      </tr>
-                    ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
   useParams,
   usePathname,
   useRouter,
   useSearchParams,
 } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  Ban,
   BadgeDollarSign,
   Briefcase,
   Calendar,
@@ -18,15 +19,19 @@ import {
   Mail,
   MapPin,
   Phone,
+  Save,
   Shield,
   Star,
+  Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { getDashboardRouteForRole } from '@/lib/dashboard-route';
+import { getErrorMessage } from '@/lib/error-message';
 import { getRoleDisplayName } from '@/lib/role-display';
 import { isAdminRole } from '@/lib/role-utils';
 import { UserRole } from '@/types';
+import toast from 'react-hot-toast';
 
 const formatDate = (value?: string) => {
   if (!value) {
@@ -80,9 +85,17 @@ function AdminUserDetailPageContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const hasAdminAccess = isAdminRole(user?.role);
   const userId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [roleDraft, setRoleDraft] = useState<{
+    userId: string;
+    role: UserRole;
+  } | null>(null);
+  const [isSavingRole, setIsSavingRole] = useState(false);
+  const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   useEffect(() => {
     if (authLoading) {
@@ -108,7 +121,7 @@ function AdminUserDetailPageContent() {
     user,
   ]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['admin-user-detail', userId],
     queryFn: () => api.getUserById(userId),
     enabled: Boolean(userId) && isAuthenticated && hasAdminAccess,
@@ -143,6 +156,94 @@ function AdminUserDetailPageContent() {
     : '/dashboard/admin/users';
   const account = data.user;
   const lawyerProfile = data.lawyerProfile;
+  const isAccountActive = account.isActive !== false;
+  const displayedRole =
+    roleDraft?.userId === account._id ? roleDraft.role : account.role;
+  const isSuperAdminViewer = user?.role === UserRole.SUPER_ADMIN;
+  const isAdminTarget = account.role === UserRole.ADMIN;
+  const isSuperAdminTarget = account.role === UserRole.SUPER_ADMIN;
+  const isStandardTarget =
+    account.role === UserRole.CLIENT || account.role === UserRole.LAWYER;
+  const canManageAdminTarget = isSuperAdminViewer && isAdminTarget;
+  const canManageStatus = isStandardTarget || canManageAdminTarget;
+  const canDeleteUser = isStandardTarget || canManageAdminTarget;
+  const canManageRole = isStandardTarget;
+  const canRestoreLawyerRole =
+    account.role === UserRole.LAWYER || Boolean(lawyerProfile);
+  const isRoleUnchanged = displayedRole === account.role;
+
+  const syncUserQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', userId] }),
+      refetch(),
+    ]);
+  };
+
+  const handleRoleSave = async () => {
+    if (isRoleUnchanged) {
+      return;
+    }
+
+    setIsSavingRole(true);
+    try {
+      await api.updateManagedUserRole(account._id, displayedRole);
+      toast.success(
+        displayedRole === UserRole.LAWYER
+          ? 'User switched to lawyer'
+          : 'Lawyer switched to user',
+      );
+      await syncUserQueries();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update user role'));
+    } finally {
+      setIsSavingRole(false);
+    }
+  };
+
+  const handleStatusToggle = async () => {
+    const nextStatus = !isAccountActive;
+    const confirmationMessage = nextStatus
+      ? 'Enable this account again?'
+      : 'Disable this account and block access?';
+
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+    setIsSavingStatus(true);
+    try {
+      await api.updateManagedUserStatus(account._id, nextStatus);
+      toast.success(nextStatus ? 'Account enabled' : 'Account disabled');
+      await syncUserQueries();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update account status'));
+    } finally {
+      setIsSavingStatus(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (
+      !window.confirm(
+        `Delete ${account.name}? This only works when the account has no linked platform records.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsDeletingUser(true);
+    try {
+      await api.deleteManagedUser(account._id);
+      await queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('User deleted');
+      router.push(backHref);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to delete user'));
+    } finally {
+      setIsDeletingUser(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
@@ -212,6 +313,14 @@ function AdminUserDetailPageContent() {
                   <p className="mt-2 flex items-center gap-2 text-sm text-[var(--text-primary)]">
                     <Calendar className="h-4 w-4 text-[#d5b47f]" />
                     {formatDate(account.createdAt)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-elevated)] p-4">
+                  <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                    Account Status
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--text-primary)]">
+                    {isAccountActive ? 'Active' : 'Disabled'}
                   </p>
                 </div>
               </div>
@@ -302,6 +411,104 @@ function AdminUserDetailPageContent() {
           </div>
 
           <div className="space-y-6">
+            <section className="brand-card p-6">
+              <div className="mb-5 flex items-center gap-3">
+                <Shield className="h-5 w-5 text-[#d5b47f]" />
+                <h2 className="text-xl font-semibold">User Management</h2>
+              </div>
+
+              {canManageRole ? (
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-elevated)] p-4">
+                  <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                    Role
+                  </p>
+                  <div className="mt-3 flex flex-col gap-3">
+                    <select
+                      value={displayedRole}
+                      onChange={(event) =>
+                        setRoleDraft({
+                          userId: account._id,
+                          role: event.target.value as UserRole,
+                        })
+                      }
+                      className="rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                    >
+                      <option value={UserRole.CLIENT}>User</option>
+                      <option
+                        value={UserRole.LAWYER}
+                        disabled={!canRestoreLawyerRole}
+                      >
+                        Lawyer
+                      </option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleRoleSave}
+                      disabled={isRoleUnchanged || isSavingRole}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-4 py-2 text-sm font-semibold text-[#1b1205] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Save className="h-4 w-4" />
+                      {isSavingRole ? 'Saving Role...' : 'Save Role'}
+                    </button>
+                  </div>
+                  {!canRestoreLawyerRole && (
+                    <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                      Lawyer access can only be restored when this account already
+                      has a saved lawyer profile.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-elevated)] p-4 text-sm text-[var(--text-secondary)]">
+                  {isAdminTarget
+                    ? isSuperAdminViewer
+                      ? 'Admin accounts can be disabled or deleted by a super admin, but their role cannot be changed here.'
+                      : 'Only a super admin can manage another admin account.'
+                    : isSuperAdminTarget
+                      ? 'Super admin accounts cannot be managed from this tool.'
+                      : 'Role management is only available for user and lawyer accounts.'}
+                </div>
+              )}
+
+              <div className="mt-4 grid gap-4">
+                {canManageStatus && (
+                  <button
+                    type="button"
+                    onClick={handleStatusToggle}
+                    disabled={isSavingStatus}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Ban className="h-4 w-4" />
+                    {isSavingStatus
+                      ? isAccountActive
+                        ? 'Disabling...'
+                        : 'Enabling...'
+                      : isAccountActive
+                        ? 'Disable Account'
+                        : 'Enable Account'}
+                  </button>
+                )}
+
+                {canDeleteUser && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteUser}
+                    disabled={isDeletingUser}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isDeletingUser ? 'Deleting...' : 'Delete Account'}
+                  </button>
+                )}
+              </div>
+
+              <p className="mt-4 text-sm text-[var(--text-secondary)]">
+                Delete only works for accounts without linked bookings, cases,
+                messages, or saved legal activity. Use disable for moderation when
+                records must be preserved.
+              </p>
+            </section>
+
             <section className="brand-card p-6">
               <h2 className="text-xl font-semibold">Audit Details</h2>
               <div className="mt-4 space-y-4">
