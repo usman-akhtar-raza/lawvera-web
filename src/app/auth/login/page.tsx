@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { Briefcase } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { getPostLoginRedirect } from '@/lib/dashboard-route';
 
 interface LoginForm {
   email: string;
@@ -40,10 +41,14 @@ export default function LoginPage() {
       if ('tokens' in response) {
         setAuth(response.user, response.tokens, response.lawyerProfile);
         toast.success('Login successful!');
-        const redirect =
-          (typeof window !== 'undefined'
+        const requestedRedirect =
+          typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('redirect')
-            : null) || '/dashboard/client';
+            : null;
+        const redirect = getPostLoginRedirect(
+          response.user.role,
+          requestedRedirect,
+        );
         router.push(redirect);
       }
     } catch (error: unknown) {

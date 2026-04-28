@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { ShieldCheck } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
 
 export default function VerifyOtpPage() {
   return (
@@ -88,15 +89,7 @@ function VerifyOtpContent() {
       const response = await api.verifyOtp(email, code);
       setAuth(response.user, response.tokens, response.lawyerProfile);
       toast.success('Email verified successfully!');
-
-      const role = response.user.role;
-      if (role === 'lawyer') {
-        router.push('/dashboard/lawyer');
-      } else if (role === 'admin') {
-        router.push('/dashboard/admin');
-      } else {
-        router.push('/dashboard/client');
-      }
+      router.push(getDashboardRouteForRole(response.user.role));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Invalid or expired OTP'));
       setOtp(['', '', '', '', '', '']);

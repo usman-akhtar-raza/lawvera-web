@@ -11,21 +11,33 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { asLawyerProfile, asUser } from '@/lib/type-guards';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
+import { UserRole } from '@/types';
 
 export default function ClientDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const isClient = user?.role === UserRole.CLIENT;
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=/dashboard/client');
+    if (authLoading) {
+      return;
     }
-  }, [isAuthenticated, authLoading, router]);
+
+    if (!isAuthenticated) {
+      router.replace('/auth/login?redirect=/dashboard/client');
+      return;
+    }
+
+    if (user && !isClient) {
+      router.replace(getDashboardRouteForRole(user.role));
+    }
+  }, [authLoading, isAuthenticated, isClient, router, user]);
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['client-bookings'],
     queryFn: () => api.getClientBookings(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isClient,
   });
 
   const handleCancel = async (bookingId: string) => {
@@ -49,7 +61,7 @@ export default function ClientDashboard() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isClient) {
     return null;
   }
 

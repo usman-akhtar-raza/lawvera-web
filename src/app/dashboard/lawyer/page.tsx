@@ -11,21 +11,33 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { asUser } from '@/lib/type-guards';
+import { getDashboardRouteForRole } from '@/lib/dashboard-route';
+import { UserRole } from '@/types';
 
 export default function LawyerDashboard() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const isLawyer = user?.role === UserRole.LAWYER;
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=/dashboard/lawyer');
+    if (authLoading) {
+      return;
     }
-  }, [isAuthenticated, authLoading, router]);
+
+    if (!isAuthenticated) {
+      router.replace('/auth/login?redirect=/dashboard/lawyer');
+      return;
+    }
+
+    if (user && !isLawyer) {
+      router.replace(getDashboardRouteForRole(user.role));
+    }
+  }, [authLoading, isAuthenticated, isLawyer, router, user]);
 
   const { data: dashboard, isLoading, refetch } = useQuery({
     queryKey: ['lawyer-dashboard'],
     queryFn: () => api.getLawyerDashboard(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isLawyer,
   });
 
   const handleStatusUpdate = async (bookingId: string, status: BookingStatus) => {
@@ -46,7 +58,7 @@ export default function LawyerDashboard() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isLawyer) {
     return null;
   }
 
