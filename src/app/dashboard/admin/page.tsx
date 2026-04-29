@@ -35,6 +35,18 @@ type ManagedUserFormState = {
   description: string;
 };
 
+const DEFAULT_SPECIALIZATIONS = [
+  'Criminal Law',
+  'Family Law',
+  'Property Law',
+  'Corporate Law',
+  'Immigration Law',
+  'Tax Law',
+].map((name, index) => ({
+  _id: `default-specialization-${index + 1}`,
+  name,
+}));
+
 const EMPTY_MANAGED_USER_FORM: ManagedUserFormState = {
   name: '',
   email: '',
@@ -116,6 +128,21 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['super-admin-users'],
     queryFn: () => api.getAdminUsers(),
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+
+  const { data: specializationOptions = DEFAULT_SPECIALIZATIONS } = useQuery({
+    queryKey: ['lawyer-specializations'],
+    queryFn: async () => {
+      try {
+        const specializations = await api.getSpecializations();
+        return specializations.length > 0
+          ? specializations
+          : DEFAULT_SPECIALIZATIONS;
+      } catch {
+        return DEFAULT_SPECIALIZATIONS;
+      }
+    },
     enabled: isAuthenticated && isSuperAdmin,
   });
 
@@ -359,8 +386,7 @@ export default function AdminDashboard() {
 
                 {managedUserForm.role === UserRole.LAWYER && (
                   <div className="grid gap-4 md:grid-cols-2">
-                    <input
-                      type="text"
+                    <select
                       value={managedUserForm.specialization}
                       onChange={(event) =>
                         setManagedUserForm((prev) => ({
@@ -368,10 +394,19 @@ export default function AdminDashboard() {
                           specialization: event.target.value,
                         }))
                       }
-                      placeholder="Specialization"
                       className="rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm"
                       required
-                    />
+                    >
+                      <option value="">Select specialization</option>
+                      {specializationOptions.map((specialization) => (
+                        <option
+                          key={specialization._id}
+                          value={specialization.name}
+                        >
+                          {specialization.name}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       type="number"
                       min="0"
