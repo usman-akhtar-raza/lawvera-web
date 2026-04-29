@@ -152,7 +152,7 @@ export function PayPalReturnClient({
   }
 
   const escrow = legalCase?.escrow;
-  const escrowCurrency = escrow?.currency || 'USD';
+  const escrowCurrency = escrow?.currency || 'PHP';
   const total = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: escrowCurrency,

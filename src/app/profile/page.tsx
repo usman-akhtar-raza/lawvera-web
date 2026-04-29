@@ -716,8 +716,10 @@ export default function ProfileSettingsPage() {
                       <span><span className="text-[var(--text-muted)]">City: </span>{lawyerProfile.city}</span>
                       <span><span className="text-[var(--text-muted)]">Fee: </span>PKR {lawyerProfile.consultationFee.toLocaleString()}</span>
                       <span className="sm:col-span-2">
-                        <span className="text-[var(--text-muted)]">PayPal payout: </span>
-                        {lawyerProfile.paypalEmail || 'Not added yet'}
+                        <span className="text-[var(--text-muted)]">Payout method: </span>
+                        {lawyerProfile.paypalEmail
+                          ? `PayPal (${lawyerProfile.paypalEmail})`
+                          : 'Not added yet'}
                       </span>
                     </div>
                   )}
@@ -741,8 +743,10 @@ export default function ProfileSettingsPage() {
                   </p>
                   {lawyerProfile && (
                     <p className="mt-3 text-sm">
-                      <span className="text-[var(--text-muted)]">PayPal payout: </span>
-                      {lawyerProfile.paypalEmail || 'Not added yet'}
+                      <span className="text-[var(--text-muted)]">Payout method: </span>
+                      {lawyerProfile.paypalEmail
+                        ? `PayPal (${lawyerProfile.paypalEmail})`
+                        : 'Not added yet'}
                     </p>
                   )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#e2f4ed] text-[#1f3d36] border border-[#46d3a1]/30">
@@ -765,8 +769,10 @@ export default function ProfileSettingsPage() {
                   </p>
                   {lawyerProfile && (
                     <p className="mt-3 text-sm">
-                      <span className="text-[var(--text-muted)]">PayPal payout: </span>
-                      {lawyerProfile.paypalEmail || 'Not added yet'}
+                      <span className="text-[var(--text-muted)]">Payout method: </span>
+                      {lawyerProfile.paypalEmail
+                        ? `PayPal (${lawyerProfile.paypalEmail})`
+                        : 'Not added yet'}
                     </p>
                   )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#fde8ed] text-[#a23a4c] border border-[#ff8c8c]/30">
@@ -839,16 +845,18 @@ export default function ProfileSettingsPage() {
             {isLawyer && lawyerProfile && (
               <div className="space-y-4 pt-2 border-t border-white/10">
                 <div>
-                  <p className="font-semibold">PayPal Payout Account</p>
+                  <p className="font-semibold">Payout Method</p>
                   <p className="text-sm text-[var(--text-muted)] mt-0.5">
-                    Add or update the PayPal email where Lawvera sends your case payouts.
+                    Add or update the PayPal account where Lawvera sends your case payouts.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
-                  <p className="text-[var(--text-muted)]">Current payout account</p>
+                  <p className="text-[var(--text-muted)]">Current payout method</p>
                   <p className="mt-1 font-medium text-[var(--text-primary)]">
-                    {lawyerProfile.paypalEmail || 'No PayPal account added yet'}
+                    {lawyerProfile.paypalEmail
+                      ? `PayPal (${lawyerProfile.paypalEmail})`
+                      : 'No payout account added yet'}
                   </p>
                 </div>
 

@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { CaseCommunicationPanel } from '@/components/communication/CaseCommunicationPanel';
 import { isAdminRole } from '@/lib/role-utils';
+import { PayPalCardEscrowForm } from '@/components/payments/PayPalCardEscrowForm';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: string }> = {
   [CaseStatus.OPEN]: { label: 'Open', color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -50,7 +51,7 @@ const ESCROW_STATUS_CONFIG: Record<
     bg: 'bg-white/10',
   },
   [CaseEscrowStatus.PENDING_APPROVAL]: {
-    label: 'Awaiting PayPal approval',
+    label: 'Awaiting payment completion',
     color: 'text-amber-300',
     bg: 'bg-amber-500/10',
   },
@@ -199,25 +200,6 @@ export default function CaseDetailPage() {
     }
   };
 
-  const handleCreateEscrowOrder = async () => {
-    const amount = Number(escrowAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error('Enter a valid escrow amount before continuing.');
-      return;
-    }
-
-    setActionLoading('escrow-create');
-    try {
-      const session = await api.createCaseEscrowOrder(caseId, { amount });
-      toast.success('Redirecting to PayPal checkout...');
-      window.location.href = session.approvalUrl;
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Failed to start PayPal checkout'));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const handleCancelEscrowOrder = async () => {
     setActionLoading('escrow-cancel');
     try {
@@ -299,6 +281,15 @@ export default function CaseDetailPage() {
   const isLawyer = user?.role === UserRole.LAWYER;
   const isAdmin = isAdminRole(user?.role);
   const lawyer = asLawyerProfile(legalCase.lawyer);
+  const hasAssignedLawyer = Boolean(legalCase.lawyer);
+  const lawyerPaypalEmail =
+    lawyer?.paypalEmail ||
+    (legalCase.lawyer &&
+    typeof legalCase.lawyer === 'object' &&
+    'paypalEmail' in legalCase.lawyer &&
+    typeof legalCase.lawyer.paypalEmail === 'string'
+      ? legalCase.lawyer.paypalEmail
+      : undefined);
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);
   const lawyerRequests = legalCase.lawyerRequests || [];
@@ -320,7 +311,7 @@ export default function CaseDetailPage() {
     provider: 'paypal',
   };
   const escrowAmountMinor = escrow.amountMinor || 0;
-  const escrowCurrency = escrow.currency || 'USD';
+  const escrowCurrency = escrow.currency || 'PHP';
   const escrowMoney = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: escrowCurrency,
@@ -335,7 +326,7 @@ export default function CaseDetailPage() {
   }).format((escrow.lawyerAmountMinor || 0) / 100);
   const canCreateEscrow =
     isClient &&
-    !!lawyer &&
+    hasAssignedLawyer &&
     [CaseStatus.ASSIGNED, CaseStatus.IN_PROGRESS, CaseStatus.RESOLVED].includes(legalCase.status) &&
     [
       CaseEscrowStatus.NOT_STARTED,
@@ -343,18 +334,16 @@ export default function CaseDetailPage() {
       CaseEscrowStatus.FAILED,
       CaseEscrowStatus.REFUNDED,
     ].includes(escrow.status);
-  const escrowActionHint = !lawyer
-    ? 'Select a lawyer first to activate PayPal escrow.'
+  const escrowActionHint = !hasAssignedLawyer
+    ? 'Select a lawyer first to activate escrow.'
     : !isClient
       ? 'Only the client who owns this case can fund escrow.'
-      : !lawyer.paypalEmail
-        ? 'The assigned lawyer must add a PayPal payout email in Profile Settings before you can pay.'
-        : [CaseEscrowStatus.HELD, CaseEscrowStatus.RELEASE_PENDING, CaseEscrowStatus.RELEASED].includes(
+      : [CaseEscrowStatus.HELD, CaseEscrowStatus.RELEASE_PENDING, CaseEscrowStatus.RELEASED].includes(
               escrow.status,
             )
           ? 'This case already has an active escrow or completed payout record.'
           : escrow.status === CaseEscrowStatus.PENDING_APPROVAL
-            ? 'A PayPal checkout is already waiting for approval or cancellation.'
+            ? 'A payment session is already waiting for completion or cancellation.'
             : legalCase.status === CaseStatus.CLOSED
               ? 'Closed cases cannot be funded.'
               : ![CaseStatus.ASSIGNED, CaseStatus.IN_PROGRESS, CaseStatus.RESOLVED].includes(
@@ -462,7 +451,7 @@ export default function CaseDetailPage() {
           </div>
         </div>
 
-        {lawyer && (
+        {hasAssignedLawyer && (
           <div className="brand-card p-6 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -479,7 +468,7 @@ export default function CaseDetailPage() {
                   )}
                 </div>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Client funds are collected through PayPal and released to the lawyer after completion, with a 15% Lawvera commission.
+                  Clients pay Lawvera by credit or debit card through PayPal-hosted fields, and the escrow is released to the lawyer after completion with a 15% Lawvera commission.
                 </p>
               </div>
             </div>
@@ -530,20 +519,32 @@ export default function CaseDetailPage() {
                     placeholder="Agreed fee"
                     className="w-full max-w-[12rem] rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
                   />
-                  <button
-                    onClick={handleCreateEscrowOrder}
-                    disabled={actionLoading !== null}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[#d5b47f]/40 bg-[#d5b47f]/15 px-4 py-2 text-sm font-medium text-[#f3e2c1] disabled:opacity-50"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    {actionLoading === 'escrow-create' ? 'Redirecting...' : 'Fund With PayPal'}
-                  </button>
+                  <div className="w-full">
+                    <PayPalCardEscrowForm
+                      caseId={caseId}
+                      amount={escrowAmount}
+                      currency={escrowCurrency}
+                      disabled={actionLoading !== null}
+                      onSuccess={() => {
+                        setEscrowAmount('');
+                        refetch();
+                      }}
+                    />
+                  </div>
                 </>
               )}
 
               {!canCreateEscrow && escrowActionHint && (
                 <p className="text-sm text-[var(--text-muted)]">
                   {escrowActionHint}
+                </p>
+              )}
+
+              {canCreateEscrow && !lawyerPaypalEmail && (
+                <p className="text-sm text-amber-200">
+                  The assigned lawyer can add their payout method later. Escrow can
+                  be funded now, but release will wait until a payout account is
+                  configured.
                 </p>
               )}
 

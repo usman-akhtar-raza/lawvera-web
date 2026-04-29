@@ -357,8 +357,14 @@ export interface CaseEscrow {
 
 export interface CaseEscrowCheckoutSession {
   case: LegalCase;
-  approvalUrl: string;
+  approvalUrl?: string;
   orderId: string;
+}
+
+export interface PayPalCardCheckoutConfig {
+  clientId: string;
+  clientToken: string;
+  currency: string;
 }
 
 export interface CaseAnalytics {

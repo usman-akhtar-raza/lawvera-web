@@ -27,6 +27,7 @@ import type {
   AdminUserDetailResponse,
   UserRole,
   CaseEscrowCheckoutSession,
+  PayPalCardCheckoutConfig,
 } from '@/types';
 import {
   clearTokens,
@@ -632,9 +633,14 @@ class ApiClient {
 
   async createCaseEscrowOrder(
     caseId: string,
-    data: { amount: number; currency?: string },
+    data: { amount: number; currency?: string; checkoutMode?: 'wallet' | 'card' },
   ): Promise<CaseEscrowCheckoutSession> {
     const response = await this.client.post(`/cases/${caseId}/escrow/create-order`, data);
+    return response.data;
+  }
+
+  async getPayPalCardCheckoutConfig(): Promise<PayPalCardCheckoutConfig> {
+    const response = await this.client.get('/cases/payments/paypal/card-config');
     return response.data;
   }
 
