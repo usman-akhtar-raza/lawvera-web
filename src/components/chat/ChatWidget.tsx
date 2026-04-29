@@ -104,6 +104,7 @@ export function ChatWidget() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [expandedPreviewKeys, setExpandedPreviewKeys] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -161,6 +162,7 @@ export function ChatWidget() {
       setSessions([]);
       setMessages([]);
       setActiveSessionId(null);
+      setExpandedPreviewKeys([]);
     }
   }, [isAuthenticated]);
 
@@ -191,6 +193,13 @@ export function ChatWidget() {
     setActiveSessionId(null);
     setMessages([]);
     setInput('');
+    setExpandedPreviewKeys([]);
+  };
+
+  const togglePreviewExpansion = (key: string) => {
+    setExpandedPreviewKeys((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+    );
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -619,15 +628,38 @@ export function ChatWidget() {
                                   {message.retrievedPreview.length > 0 && (
                                     <div className="mt-2 space-y-2">
                                       {message.retrievedPreview.slice(0, 2).map((preview, idx) => (
-                                        <div
+                                        <button
                                           key={`${message.id}-preview-${idx}`}
-                                          className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-[var(--text-secondary)]"
+                                          type="button"
+                                          onClick={() =>
+                                            togglePreviewExpansion(
+                                              `${message.id}-preview-${idx}`,
+                                            )
+                                          }
+                                          className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-left text-xs text-[var(--text-secondary)] transition hover:border-[#d5b47f]/35"
                                         >
                                           <p className="font-semibold text-[var(--text-primary)]">
                                             {preview.sourceTitle}
                                           </p>
-                                          <p className="mt-1 line-clamp-3">{preview.snippet}</p>
-                                        </div>
+                                          <p
+                                            className={`mt-1 whitespace-pre-wrap break-words ${
+                                              expandedPreviewKeys.includes(
+                                                `${message.id}-preview-${idx}`,
+                                              )
+                                                ? ''
+                                                : 'line-clamp-2'
+                                            }`}
+                                          >
+                                            {preview.snippet}
+                                          </p>
+                                          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#d5b47f]">
+                                            {expandedPreviewKeys.includes(
+                                              `${message.id}-preview-${idx}`,
+                                            )
+                                              ? 'Show less'
+                                              : 'Show more'}
+                                          </p>
+                                        </button>
                                       ))}
                                     </div>
                                   )}
