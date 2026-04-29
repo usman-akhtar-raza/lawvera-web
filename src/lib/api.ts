@@ -345,6 +345,16 @@ class ApiClient {
     return response.data;
   }
 
+  async updateBookingMeetingLink(
+    bookingId: string,
+    meetingLink: string,
+  ): Promise<Booking> {
+    const response = await this.client.patch(`/bookings/${bookingId}/meeting-link`, {
+      meetingLink,
+    });
+    return response.data;
+  }
+
   async cancelBooking(bookingId: string): Promise<Booking> {
     const response = await this.client.patch(`/bookings/${bookingId}/cancel`);
     return response.data;

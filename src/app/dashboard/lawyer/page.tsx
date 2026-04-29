@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, CheckCircle, XCircle, Settings } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
+  ExternalLink,
+  Link2,
+  Settings,
+  XCircle,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { BookingStatus, LawyerStatus } from '@/types';
@@ -39,6 +47,9 @@ export default function LawyerDashboard() {
     queryFn: () => api.getLawyerDashboard(),
     enabled: isAuthenticated && isLawyer,
   });
+  const [savingMeetingLinkId, setSavingMeetingLinkId] = useState<string | null>(
+    null,
+  );
 
   const handleStatusUpdate = async (bookingId: string, status: BookingStatus) => {
     try {
@@ -47,6 +58,33 @@ export default function LawyerDashboard() {
       refetch();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to update status'));
+    }
+  };
+
+  const handleMeetingLinkSave = async (
+    event: React.FormEvent<HTMLFormElement>,
+    bookingId: string,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const rawMeetingLink = formData.get('meetingLink');
+    const meetingLink =
+      typeof rawMeetingLink === 'string' ? rawMeetingLink.trim() : '';
+
+    if (!meetingLink) {
+      toast.error('Please enter a valid meeting link');
+      return;
+    }
+
+    setSavingMeetingLinkId(bookingId);
+    try {
+      await api.updateBookingMeetingLink(bookingId, meetingLink);
+      toast.success('Meeting link saved and emailed to the client');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to save meeting link'));
+    } finally {
+      setSavingMeetingLinkId(null);
     }
   };
 
@@ -169,6 +207,35 @@ export default function LawyerDashboard() {
                             Reason: {booking.reason}
                           </p>
                         )}
+                        <form
+                          onSubmit={(event) =>
+                            handleMeetingLinkSave(event, booking._id)
+                          }
+                          className="mt-4 flex flex-col gap-3 sm:flex-row"
+                        >
+                          <input
+                            name="meetingLink"
+                            type="url"
+                            defaultValue={booking.meetingLink || ''}
+                            placeholder="https://meet.google.com/abc-defg-hij"
+                            className="flex-1 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={savingMeetingLinkId === booking._id}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d5b47f]/40 bg-[var(--brand-accent-soft)] px-4 py-2 text-sm font-semibold text-[#b07a43] transition hover:border-[#d5b47f] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Link2 className="h-4 w-4" />
+                            {savingMeetingLinkId === booking._id
+                              ? 'Sending...'
+                              : booking.meetingLink
+                                ? 'Update Link'
+                                : 'Send Link'}
+                          </button>
+                        </form>
+                        <p className="mt-2 text-xs text-[var(--text-muted)]">
+                          Saving a meeting link emails it directly to the client.
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -225,6 +292,43 @@ export default function LawyerDashboard() {
                           <p className="text-sm text-[var(--text-secondary)] mt-2">
                             Reason: {booking.reason}
                           </p>
+                        )}
+                        <form
+                          onSubmit={(event) =>
+                            handleMeetingLinkSave(event, booking._id)
+                          }
+                          className="mt-4 flex flex-col gap-3 sm:flex-row"
+                        >
+                          <input
+                            name="meetingLink"
+                            type="url"
+                            defaultValue={booking.meetingLink || ''}
+                            placeholder="https://meet.google.com/abc-defg-hij"
+                            className="flex-1 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={savingMeetingLinkId === booking._id}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d5b47f]/40 bg-[var(--brand-accent-soft)] px-4 py-2 text-sm font-semibold text-[#b07a43] transition hover:border-[#d5b47f] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Link2 className="h-4 w-4" />
+                            {savingMeetingLinkId === booking._id
+                              ? 'Sending...'
+                              : booking.meetingLink
+                                ? 'Update Link'
+                                : 'Send Link'}
+                          </button>
+                        </form>
+                        {booking.meetingLink && (
+                          <a
+                            href={booking.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#d5b47f] hover:text-[#f3e2c1]"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Open current meeting link
+                          </a>
                         )}
                       </div>
                       <button

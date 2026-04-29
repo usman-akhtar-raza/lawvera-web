@@ -82,6 +82,7 @@ export interface Booking {
   status: BookingStatus;
   reason?: string;
   notes?: string;
+  meetingLink?: string;
   payment: {
     provider: string;
     status: PaymentStatus;

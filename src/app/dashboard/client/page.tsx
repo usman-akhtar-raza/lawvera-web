@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock, ExternalLink, Link2, User } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { BookingStatus } from '@/types';
@@ -241,6 +241,22 @@ export default function ClientDashboard() {
                         {booking.reason && (
                           <p className="text-sm text-[var(--text-secondary)] mt-2">
                             Reason: {booking.reason}
+                          </p>
+                        )}
+                        {booking.meetingLink ? (
+                          <a
+                            href={booking.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] px-3 py-2 text-sm font-semibold text-[#b07a43] transition hover:border-[#d5b47f]"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Join Meeting
+                          </a>
+                        ) : (
+                          <p className="mt-3 inline-flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                            <Link2 className="h-4 w-4" />
+                            Meeting link will appear here after your lawyer shares it by email.
                           </p>
                         )}
                       </div>
