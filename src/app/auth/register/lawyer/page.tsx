@@ -34,6 +34,7 @@ interface LawyerRegisterForm {
   experienceYears: number;
   city: string;
   consultationFee: number;
+  paypalEmail?: string;
   education?: string;
   description?: string;
   availabilitySelection?: string;
@@ -133,27 +134,11 @@ export default function LawyerRegisterPage() {
     clearErrors('availabilitySelection');
 
     try {
-<<<<<<< Updated upstream
-      const registerData = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        specialization: data.specialization,
-        experienceYears: data.experienceYears,
-        city: data.city,
-        consultationFee: data.consultationFee,
-        education: data.education,
-        description: data.description,
-        profilePhotoUrl: data.profilePhotoUrl,
-      };
-=======
       const {
         confirmPassword: _confirmPassword,
         availabilitySelection: _availabilitySelection,
         ...formValues
       } = data;
-
->>>>>>> Stashed changes
       const response = await api.registerLawyer({
         name: formValues.name.trim(),
         email: formValues.email.trim(),
@@ -274,9 +259,6 @@ export default function LawyerRegisterPage() {
               </div>
 
               <div>
-<<<<<<< Updated upstream
-                <label className={labelClass}>
-=======
                 <label htmlFor="paypalEmail" className={authLabelClass}>
                   PayPal Payout Email
                 </label>
@@ -305,7 +287,6 @@ export default function LawyerRegisterPage() {
 
               <div>
                 <label htmlFor="password" className={authLabelClass}>
->>>>>>> Stashed changes
                   Password *
                 </label>
                 <PasswordField

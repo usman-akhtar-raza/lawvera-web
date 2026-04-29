@@ -150,6 +150,7 @@ class ApiClient {
     experienceYears: number;
     city: string;
     consultationFee: number;
+    paypalEmail?: string;
     education?: string;
     description?: string;
     profilePhotoUrl?: string;
@@ -195,6 +196,7 @@ class ApiClient {
     experienceYears: number;
     city: string;
     consultationFee: number;
+    paypalEmail?: string;
     education?: string;
     description?: string;
     profilePhotoUrl?: string;
