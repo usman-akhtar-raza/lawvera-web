@@ -26,6 +26,7 @@ import type {
   UserSearchParams,
   AdminUserDetailResponse,
   UserRole,
+  CaseEscrowCheckoutSession,
 } from '@/types';
 import {
   clearTokens,
@@ -150,6 +151,7 @@ class ApiClient {
     experienceYears: number;
     city: string;
     consultationFee: number;
+    paypalEmail?: string;
     education?: string;
     description?: string;
     profilePhotoUrl?: string;
@@ -195,6 +197,7 @@ class ApiClient {
     experienceYears: number;
     city: string;
     consultationFee: number;
+    paypalEmail?: string;
     education?: string;
     description?: string;
     profilePhotoUrl?: string;
@@ -273,6 +276,7 @@ class ApiClient {
 
   async updateMyLawyerProfile(data: {
     consultationFee: number;
+    paypalEmail?: string;
   }): Promise<LawyerProfile> {
     const response = await this.client.patch('/lawyers/me/profile', data);
     return response.data;
@@ -623,6 +627,64 @@ class ApiClient {
     data: { status: CaseStatus; note?: string },
   ): Promise<LegalCase> {
     const response = await this.client.patch(`/cases/${caseId}/status`, data);
+    return response.data;
+  }
+
+  async createCaseEscrowOrder(
+    caseId: string,
+    data: { amount: number; currency?: string },
+  ): Promise<CaseEscrowCheckoutSession> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/create-order`, data);
+    return response.data;
+  }
+
+  async captureCaseEscrowOrder(
+    caseId: string,
+    orderId: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/capture`, {
+      orderId,
+    });
+    return response.data;
+  }
+
+  async cancelCaseEscrowOrder(
+    caseId: string,
+    note?: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/cancel`, {
+      note,
+    });
+    return response.data;
+  }
+
+  async openCaseEscrowDispute(
+    caseId: string,
+    note?: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/dispute`, {
+      note,
+    });
+    return response.data;
+  }
+
+  async releaseCaseEscrowPayment(
+    caseId: string,
+    note?: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/release`, {
+      note,
+    });
+    return response.data;
+  }
+
+  async refundCaseEscrowPayment(
+    caseId: string,
+    note?: string,
+  ): Promise<LegalCase> {
+    const response = await this.client.post(`/cases/${caseId}/escrow/refund`, {
+      note,
+    });
     return response.data;
   }
 

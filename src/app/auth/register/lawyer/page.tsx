@@ -19,6 +19,7 @@ interface LawyerRegisterForm {
   experienceYears: number;
   city: string;
   consultationFee: number;
+  paypalEmail?: string;
   education?: string;
   description?: string;
   profilePhotoUrl?: string;
@@ -131,6 +132,7 @@ export default function LawyerRegisterPage() {
         experienceYears: data.experienceYears,
         city: data.city,
         consultationFee: data.consultationFee,
+        paypalEmail: data.paypalEmail?.trim() || undefined,
         education: data.education,
         description: data.description,
         profilePhotoUrl: data.profilePhotoUrl,
@@ -230,6 +232,27 @@ export default function LawyerRegisterPage() {
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className={labelClass}>
+                  PayPal Payout Email
+                </label>
+                <input
+                  {...register('paypalEmail', {
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid PayPal email',
+                    },
+                  })}
+                  type="email"
+                  className={inputClass}
+                />
+                {errors.paypalEmail && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.paypalEmail.message}
                   </p>
                 )}
               </div>

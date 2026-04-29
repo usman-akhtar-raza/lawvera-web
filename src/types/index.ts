@@ -27,6 +27,24 @@ export enum LawyerStatus {
   REJECTED = 'rejected',
 }
 
+export enum CaseEscrowStatus {
+  NOT_STARTED = 'not_started',
+  PENDING_APPROVAL = 'pending_approval',
+  HELD = 'held',
+  RELEASE_PENDING = 'release_pending',
+  RELEASED = 'released',
+  REFUND_PENDING = 'refund_pending',
+  REFUNDED = 'refunded',
+  CANCELLED = 'cancelled',
+  FAILED = 'failed',
+}
+
+export enum CaseEscrowDisputeStatus {
+  NONE = 'none',
+  OPEN = 'open',
+  RESOLVED = 'resolved',
+}
+
 export interface User {
   _id: string;
   name: string;
@@ -47,6 +65,7 @@ export interface LawyerProfile {
   experienceYears: number;
   city: string;
   consultationFee: number;
+  paypalEmail?: string;
   availability: AvailabilitySlot[];
   education?: string;
   description?: string;
@@ -115,19 +134,24 @@ export interface FinanceCounterparty {
 
 export interface FinanceTransaction {
   id: string;
-  bookingId: string;
+  bookingId: string | null;
+  caseId: string | null;
+  sourceType: 'booking' | 'case';
+  title: string;
   direction: 'paid' | 'received';
   counterparty: FinanceCounterparty;
   lawyerSpecialization: string | null;
   amountMinor: number;
   currency: string;
   provider: string;
-  paymentStatus: PaymentStatus;
-  bookingStatus: BookingStatus;
+  paymentStatus: PaymentStatus | 'refunded' | 'succeeded';
+  bookingStatus: BookingStatus | null;
+  caseStatus: CaseStatus | null;
+  escrowStatus: CaseEscrowStatus | null;
   txnRefNo: string;
   paidAt: string | null;
-  appointmentDate: string;
-  slotTime: string;
+  appointmentDate: string | null;
+  slotTime: string | null;
   reason: string | null;
 }
 
@@ -288,12 +312,53 @@ export interface LegalCase {
   client: string | User;
   lawyer?: string | LawyerProfile;
   lawyerRequests?: CaseLawyerRequest[];
+  escrow: CaseEscrow;
   resolutionSummary?: string;
   resolvedAt?: string;
   closedAt?: string;
   activityLog: CaseActivityLog[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface CaseEscrow {
+  provider: string;
+  status: CaseEscrowStatus;
+  disputeStatus: CaseEscrowDisputeStatus;
+  amountMinor?: number;
+  currency?: string;
+  platformCommissionRateBps?: number;
+  platformCommissionMinor?: number;
+  lawyerAmountMinor?: number;
+  invoiceId?: string;
+  paypalOrderId?: string;
+  paypalCaptureId?: string;
+  paypalPayoutBatchId?: string;
+  paypalPayoutItemId?: string;
+  paypalPayoutStatus?: string;
+  paypalRefundId?: string;
+  payerId?: string;
+  payerEmail?: string;
+  lastPayPalEvent?: string;
+  lastWebhookId?: string;
+  lastIpnTxnId?: string;
+  lastError?: string;
+  initiatedAt?: string;
+  approvedAt?: string;
+  capturedAt?: string;
+  releaseRequestedAt?: string;
+  releasedAt?: string;
+  refundedAt?: string;
+  cancelledAt?: string;
+  disputedAt?: string;
+  disputeResolvedAt?: string;
+  lastWebhookAt?: string;
+}
+
+export interface CaseEscrowCheckoutSession {
+  case: LegalCase;
+  approvalUrl: string;
+  orderId: string;
 }
 
 export interface CaseAnalytics {

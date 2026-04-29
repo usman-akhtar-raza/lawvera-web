@@ -12,10 +12,18 @@ import {
   CheckCircle,
   Play,
   XCircle,
+  Wallet,
+  ShieldAlert,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { CaseRequestStatus, CaseStatus, UserRole } from '@/types';
+import {
+  CaseEscrowDisputeStatus,
+  CaseEscrowStatus,
+  CaseRequestStatus,
+  CaseStatus,
+  UserRole,
+} from '@/types';
 import type { CaseLawyerRequest, LawyerProfile } from '@/types';
 import { format } from 'date-fns';
 import { asUser, asLawyerProfile } from '@/lib/type-guards';
@@ -32,10 +40,72 @@ const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: stri
   [CaseStatus.CLOSED]: { label: 'Closed', color: 'text-gray-600', bg: 'bg-gray-200' },
 };
 
+const ESCROW_STATUS_CONFIG: Record<
+  CaseEscrowStatus,
+  { label: string; color: string; bg: string }
+> = {
+  [CaseEscrowStatus.NOT_STARTED]: {
+    label: 'Not funded',
+    color: 'text-gray-300',
+    bg: 'bg-white/10',
+  },
+  [CaseEscrowStatus.PENDING_APPROVAL]: {
+    label: 'Awaiting PayPal approval',
+    color: 'text-amber-300',
+    bg: 'bg-amber-500/10',
+  },
+  [CaseEscrowStatus.HELD]: {
+    label: 'Held in escrow',
+    color: 'text-[#d5b47f]',
+    bg: 'bg-[#d5b47f]/15',
+  },
+  [CaseEscrowStatus.RELEASE_PENDING]: {
+    label: 'Payout processing',
+    color: 'text-sky-300',
+    bg: 'bg-sky-500/10',
+  },
+  [CaseEscrowStatus.RELEASED]: {
+    label: 'Released to lawyer',
+    color: 'text-emerald-300',
+    bg: 'bg-emerald-500/10',
+  },
+  [CaseEscrowStatus.REFUND_PENDING]: {
+    label: 'Refund processing',
+    color: 'text-orange-300',
+    bg: 'bg-orange-500/10',
+  },
+  [CaseEscrowStatus.REFUNDED]: {
+    label: 'Refunded to client',
+    color: 'text-blue-300',
+    bg: 'bg-blue-500/10',
+  },
+  [CaseEscrowStatus.CANCELLED]: {
+    label: 'Checkout cancelled',
+    color: 'text-gray-300',
+    bg: 'bg-white/10',
+  },
+  [CaseEscrowStatus.FAILED]: {
+    label: 'Payment issue',
+    color: 'text-red-300',
+    bg: 'bg-red-500/10',
+  },
+};
+
 function StatusBadge({ status }: { status: CaseStatus }) {
   const config = STATUS_CONFIG[status];
   return (
     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.color} ${config.bg}`}>
+      {config.label}
+    </span>
+  );
+}
+
+function EscrowStatusBadge({ status }: { status: CaseEscrowStatus }) {
+  const config = ESCROW_STATUS_CONFIG[status];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${config.color} ${config.bg}`}
+    >
       {config.label}
     </span>
   );
@@ -62,6 +132,7 @@ export default function CaseDetailPage() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [resolutionNote, setResolutionNote] = useState('');
   const [requestMessage, setRequestMessage] = useState('');
+  const [escrowAmount, setEscrowAmount] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -128,6 +199,92 @@ export default function CaseDetailPage() {
     }
   };
 
+  const handleCreateEscrowOrder = async () => {
+    const amount = Number(escrowAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid escrow amount before continuing.');
+      return;
+    }
+
+    setActionLoading('escrow-create');
+    try {
+      const session = await api.createCaseEscrowOrder(caseId, { amount });
+      toast.success('Redirecting to PayPal checkout...');
+      window.location.href = session.approvalUrl;
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to start PayPal checkout'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancelEscrowOrder = async () => {
+    setActionLoading('escrow-cancel');
+    try {
+      await api.cancelCaseEscrowOrder(caseId, 'Client cancelled PayPal checkout');
+      toast.success('Escrow checkout cancelled');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to cancel escrow checkout'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleOpenEscrowDispute = async () => {
+    const note = window.prompt(
+      'Add a short dispute note for the admin (optional):',
+      '',
+    );
+    if (note === null) {
+      return;
+    }
+
+    setActionLoading('escrow-dispute');
+    try {
+      await api.openCaseEscrowDispute(caseId, note || undefined);
+      toast.success('Dispute opened. Escrow release is now blocked.');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to open dispute'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAdminReleaseEscrow = async () => {
+    setActionLoading('escrow-release');
+    try {
+      await api.releaseCaseEscrowPayment(caseId, 'Manual release by admin');
+      toast.success('Escrow payout initiated for the assigned lawyer');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to release escrow'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAdminRefundEscrow = async () => {
+    const confirmed = window.confirm(
+      'Refund the full escrow amount back to the client?',
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setActionLoading('escrow-refund');
+    try {
+      await api.refundCaseEscrowPayment(caseId, 'Manual refund by admin');
+      toast.success('Escrow refund has been started');
+      refetch();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to refund escrow'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-[var(--background-muted)] flex items-center justify-center">
@@ -157,6 +314,60 @@ export default function CaseDetailPage() {
     return Boolean(user?._id && requestLawyerUser?._id === user._id);
   });
   const isOpenForRequests = legalCase.status === CaseStatus.OPEN && !lawyer;
+  const escrow = legalCase.escrow || {
+    status: CaseEscrowStatus.NOT_STARTED,
+    disputeStatus: CaseEscrowDisputeStatus.NONE,
+    provider: 'paypal',
+  };
+  const escrowAmountMinor = escrow.amountMinor || 0;
+  const escrowCurrency = escrow.currency || 'USD';
+  const escrowMoney = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: escrowCurrency,
+  }).format(escrowAmountMinor / 100);
+  const commissionMoney = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: escrowCurrency,
+  }).format((escrow.platformCommissionMinor || 0) / 100);
+  const lawyerMoney = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: escrowCurrency,
+  }).format((escrow.lawyerAmountMinor || 0) / 100);
+  const canCreateEscrow =
+    isClient &&
+    !!lawyer &&
+    [CaseStatus.ASSIGNED, CaseStatus.IN_PROGRESS, CaseStatus.RESOLVED].includes(legalCase.status) &&
+    [
+      CaseEscrowStatus.NOT_STARTED,
+      CaseEscrowStatus.CANCELLED,
+      CaseEscrowStatus.FAILED,
+      CaseEscrowStatus.REFUNDED,
+    ].includes(escrow.status);
+  const escrowActionHint = !lawyer
+    ? 'Select a lawyer first to activate PayPal escrow.'
+    : !isClient
+      ? 'Only the client who owns this case can fund escrow.'
+      : !lawyer.paypalEmail
+        ? 'The assigned lawyer must add a PayPal payout email in Profile Settings before you can pay.'
+        : [CaseEscrowStatus.HELD, CaseEscrowStatus.RELEASE_PENDING, CaseEscrowStatus.RELEASED].includes(
+              escrow.status,
+            )
+          ? 'This case already has an active escrow or completed payout record.'
+          : escrow.status === CaseEscrowStatus.PENDING_APPROVAL
+            ? 'A PayPal checkout is already waiting for approval or cancellation.'
+            : legalCase.status === CaseStatus.CLOSED
+              ? 'Closed cases cannot be funded.'
+              : ![CaseStatus.ASSIGNED, CaseStatus.IN_PROGRESS, CaseStatus.RESOLVED].includes(
+                    legalCase.status,
+                  )
+                ? 'Payment becomes available after a lawyer is selected.'
+                : null;
+  const canOpenDispute =
+    isClient &&
+    [CaseEscrowStatus.HELD, CaseEscrowStatus.RELEASE_PENDING, CaseEscrowStatus.RELEASED].includes(
+      escrow.status,
+    ) &&
+    escrow.disputeStatus !== CaseEscrowDisputeStatus.OPEN;
 
   return (
     <div className="min-h-screen bg-[var(--background-muted)] py-8 text-[var(--text-primary)]">
@@ -250,6 +461,134 @@ export default function CaseDetailPage() {
             )}
           </div>
         </div>
+
+        {lawyer && (
+          <div className="brand-card p-6 mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    Case Escrow
+                  </h3>
+                  <EscrowStatusBadge status={escrow.status} />
+                  {escrow.disputeStatus === CaseEscrowDisputeStatus.OPEN && (
+                    <span className="inline-flex items-center rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-300">
+                      Disputed
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Client funds are collected through PayPal and released to the lawyer after completion, with a 15% Lawvera commission.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  Client payment
+                </p>
+                <p className="mt-2 text-xl font-semibold">{escrowAmountMinor ? escrowMoney : 'Not set'}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  Lawvera commission
+                </p>
+                <p className="mt-2 text-xl font-semibold">{commissionMoney}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  Lawyer payout
+                </p>
+                <p className="mt-2 text-xl font-semibold">{lawyerMoney}</p>
+              </div>
+            </div>
+
+            {escrow.lastError && (
+              <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                {escrow.lastError}
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
+              {escrow.paypalOrderId && <span>Order: {escrow.paypalOrderId}</span>}
+              {escrow.paypalCaptureId && <span>Capture: {escrow.paypalCaptureId}</span>}
+              {escrow.paypalPayoutBatchId && <span>Payout batch: {escrow.paypalPayoutBatchId}</span>}
+              {escrow.paypalRefundId && <span>Refund: {escrow.paypalRefundId}</span>}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              {canCreateEscrow && (
+                <>
+                  <input
+                    value={escrowAmount}
+                    onChange={(event) => setEscrowAmount(event.target.value)}
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    placeholder="Agreed fee"
+                    className="w-full max-w-[12rem] rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]"
+                  />
+                  <button
+                    onClick={handleCreateEscrowOrder}
+                    disabled={actionLoading !== null}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#d5b47f]/40 bg-[#d5b47f]/15 px-4 py-2 text-sm font-medium text-[#f3e2c1] disabled:opacity-50"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    {actionLoading === 'escrow-create' ? 'Redirecting...' : 'Fund With PayPal'}
+                  </button>
+                </>
+              )}
+
+              {!canCreateEscrow && escrowActionHint && (
+                <p className="text-sm text-[var(--text-muted)]">
+                  {escrowActionHint}
+                </p>
+              )}
+
+              {isClient && escrow.status === CaseEscrowStatus.PENDING_APPROVAL && (
+                <button
+                  onClick={handleCancelEscrowOrder}
+                  disabled={actionLoading !== null}
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] disabled:opacity-50"
+                >
+                  {actionLoading === 'escrow-cancel' ? 'Cancelling...' : 'Cancel Checkout'}
+                </button>
+              )}
+
+              {canOpenDispute && (
+                <button
+                  onClick={handleOpenEscrowDispute}
+                  disabled={actionLoading !== null}
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-300 disabled:opacity-50"
+                >
+                  <ShieldAlert className="h-4 w-4" />
+                  {actionLoading === 'escrow-dispute' ? 'Opening...' : 'Open Dispute'}
+                </button>
+              )}
+
+              {isAdmin && escrow.status === CaseEscrowStatus.HELD && (
+                <>
+                  <button
+                    onClick={handleAdminReleaseEscrow}
+                    disabled={actionLoading !== null}
+                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 disabled:opacity-50"
+                  >
+                    {actionLoading === 'escrow-release' ? 'Releasing...' : 'Admin Release'}
+                  </button>
+                  <button
+                    onClick={handleAdminRefundEscrow}
+                    disabled={actionLoading !== null}
+                    className="inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-300 disabled:opacity-50"
+                  >
+                    {actionLoading === 'escrow-refund' ? 'Refunding...' : 'Admin Refund'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         {legalCase.status !== CaseStatus.CLOSED && (

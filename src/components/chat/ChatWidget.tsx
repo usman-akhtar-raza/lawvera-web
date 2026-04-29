@@ -618,7 +618,7 @@ export function ChatWidget() {
                                   )}
                                   {message.retrievedPreview.length > 0 && (
                                     <div className="mt-2 space-y-2">
-                                      {message.retrievedPreview.slice(0, 2).map((preview, idx) => (
+                                      {message.retrievedPreview.map((preview, idx) => (
                                         <div
                                           key={`${message.id}-preview-${idx}`}
                                           className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-[var(--text-secondary)]"

@@ -4,10 +4,10 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Briefcase, Plus, Clock, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { CaseStatus, UserRole } from '@/types';
+import { CaseEscrowStatus, CaseStatus, UserRole } from '@/types';
 import type { LegalCase } from '@/types';
 import { format } from 'date-fns';
 import { asUser, asLawyerProfile } from '@/lib/type-guards';
@@ -184,60 +184,127 @@ function CaseCard({
   const lawyerUser = asUser(lawyer?.user);
   const client = asUser(legalCase.client);
   const isLawyer = userRole === UserRole.LAWYER;
+  const isClient = userRole === UserRole.CLIENT;
   const isAdmin = isAdminRole(userRole);
   const isLiveOpenCase = isLawyer && legalCase.status === CaseStatus.OPEN && !lawyer;
+  const escrowStatus = legalCase.escrow?.status || CaseEscrowStatus.NOT_STARTED;
+  const canFundEscrow =
+    isClient &&
+    !!lawyer &&
+    [CaseStatus.ASSIGNED, CaseStatus.IN_PROGRESS, CaseStatus.RESOLVED].includes(
+      legalCase.status,
+    ) &&
+    [
+      CaseEscrowStatus.NOT_STARTED,
+      CaseEscrowStatus.CANCELLED,
+      CaseEscrowStatus.FAILED,
+      CaseEscrowStatus.REFUNDED,
+    ].includes(escrowStatus);
+  const canReviewEscrow =
+    isClient &&
+    !!lawyer &&
+    [
+      CaseEscrowStatus.PENDING_APPROVAL,
+      CaseEscrowStatus.HELD,
+      CaseEscrowStatus.RELEASE_PENDING,
+      CaseEscrowStatus.RELEASED,
+      CaseEscrowStatus.REFUND_PENDING,
+    ].includes(escrowStatus);
 
   return (
-    <Link
-      href={`/cases/${legalCase._id}`}
-      className="block border border-white/10 rounded-lg p-4 bg-white/5 hover:border-[#d5b47f]/40 transition-colors"
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
-            <h3 className="font-semibold text-lg">{legalCase.title}</h3>
-            <StatusBadge status={legalCase.status} />
-          </div>
-          <p className="text-sm text-[var(--text-secondary)] capitalize mb-2">
-            {legalCase.category.replace('_', ' ')}
-          </p>
-          <p className="text-sm text-[var(--text-muted)] line-clamp-2">
-            {legalCase.description}
-          </p>
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
-            {isLawyer && client && (
-              <span>Client: {client.name}</span>
-            )}
-            {isLawyer && (
-              <span>Assigned lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
-            )}
-            {isLiveOpenCase && (
-              <span>Live case: accepting lawyer requests</span>
-            )}
-            {!isLawyer && !isAdmin && (
-              <span>Lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
-            )}
-            {!isLawyer && !isAdmin && lawyer?.specialization && (
-              <span>Specialization: {lawyer.specialization}</span>
-            )}
-            {isAdmin && lawyerUser && (
-              <span>Lawyer: {lawyerUser.name}</span>
-            )}
-            {isAdmin && client && (
-              <span>Client: {client.name}</span>
-            )}
-            {isAdmin && lawyer?.specialization && (
-              <span>Specialization: {lawyer.specialization}</span>
-            )}
-            {legalCase.createdAt && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {format(new Date(legalCase.createdAt), 'MMM d, yyyy')}
-              </span>
-            )}
+    <div className="border border-white/10 rounded-lg p-4 bg-white/5 hover:border-[#d5b47f]/40 transition-colors">
+      <Link href={`/cases/${legalCase._id}`} className="block">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className="font-semibold text-lg">{legalCase.title}</h3>
+              <StatusBadge status={legalCase.status} />
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] capitalize mb-2">
+              {legalCase.category.replace('_', ' ')}
+            </p>
+            <p className="text-sm text-[var(--text-muted)] line-clamp-2">
+              {legalCase.description}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
+              {isLawyer && client && (
+                <span>Client: {client.name}</span>
+              )}
+              {isLawyer && (
+                <span>Assigned lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
+              )}
+              {isLiveOpenCase && (
+                <span>Live case: accepting lawyer requests</span>
+              )}
+              {!isLawyer && !isAdmin && (
+                <span>Lawyer: {lawyerUser?.name || 'Not assigned yet'}</span>
+              )}
+              {!isLawyer && !isAdmin && lawyer?.specialization && (
+                <span>Specialization: {lawyer.specialization}</span>
+              )}
+              {isAdmin && lawyerUser && (
+                <span>Lawyer: {lawyerUser.name}</span>
+              )}
+              {isAdmin && client && (
+                <span>Client: {client.name}</span>
+              )}
+              {isAdmin && lawyer?.specialization && (
+                <span>Specialization: {lawyer.specialization}</span>
+              )}
+              <span>Escrow: {escrowStatus.replace(/_/g, ' ')}</span>
+              {legalCase.createdAt && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(new Date(legalCase.createdAt), 'MMM d, yyyy')}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+
+      {canFundEscrow && (
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-[#d5b47f]/30 bg-[var(--brand-accent-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 rounded-full border border-[#d5b47f]/30 bg-white/70 p-2 text-[#b07a43]">
+              <Wallet className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-[#7a511f]">
+                Escrow payment is ready
+              </p>
+              <p className="text-sm text-[#946739]">
+                Open this case and fund the agreed fee with PayPal.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/cases/${legalCase._id}`}
+            className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] px-4 py-2 text-sm font-semibold text-[#1b1205]"
+          >
+            Pay Now
+          </Link>
+        </div>
+      )}
+
+      {canReviewEscrow && (
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              Escrow payment is in progress
+            </p>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Open the case to review payment, release, or dispute status.
+            </p>
+          </div>
+          <Link
+            href={`/cases/${legalCase._id}`}
+            className="inline-flex items-center justify-center rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-white/5"
+          >
+            View Payment
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }

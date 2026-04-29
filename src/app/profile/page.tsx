@@ -58,12 +58,17 @@ interface LawyerApplyForm {
   experienceYears: number;
   city: string;
   consultationFee: number;
+  paypalEmail?: string;
   education?: string;
   description?: string;
 }
 
 interface LawyerFeeForm {
   consultationFee: number;
+}
+
+interface LawyerPayoutForm {
+  paypalEmail?: string;
 }
 
 export default function ProfileSettingsPage() {
@@ -97,6 +102,12 @@ export default function ProfileSettingsPage() {
     formState: { errors: lawyerFeeErrors },
     reset: resetLawyerFeeForm,
   } = useForm<LawyerFeeForm>();
+  const {
+    register: registerLawyerPayout,
+    handleSubmit: handleLawyerPayoutSubmit,
+    formState: { errors: lawyerPayoutErrors },
+    reset: resetLawyerPayoutForm,
+  } = useForm<LawyerPayoutForm>();
 
   const inputClass =
     'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] text-sm';
@@ -129,9 +140,14 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     if (isLawyer && lawyerProfile) {
-      resetLawyerFeeForm({ consultationFee: lawyerProfile.consultationFee });
+      resetLawyerFeeForm({
+        consultationFee: lawyerProfile.consultationFee,
+      });
+      resetLawyerPayoutForm({
+        paypalEmail: lawyerProfile.paypalEmail || '',
+      });
     }
-  }, [isLawyer, lawyerProfile, resetLawyerFeeForm]);
+  }, [isLawyer, lawyerProfile, resetLawyerFeeForm, resetLawyerPayoutForm]);
 
   useEffect(() => {
     if (!isAuthenticated || !isLawyer || lawyerProfile) {
@@ -241,6 +257,7 @@ export default function ProfileSettingsPage() {
         experienceYears: Number(data.experienceYears),
         city: data.city,
         consultationFee: Number(data.consultationFee),
+        paypalEmail: data.paypalEmail?.trim() || undefined,
         education: data.education,
         description: data.description,
         availability: filledAvailability,
@@ -264,12 +281,34 @@ export default function ProfileSettingsPage() {
     try {
       const updatedProfile = await api.updateMyLawyerProfile({
         consultationFee: Number(data.consultationFee),
+        paypalEmail: lawyerProfile?.paypalEmail || undefined,
       });
       setLawyerProfile(updatedProfile);
-      resetLawyerFeeForm({ consultationFee: updatedProfile.consultationFee });
+      resetLawyerFeeForm({
+        consultationFee: updatedProfile.consultationFee,
+      });
       toast.success('Consultation fee updated successfully.');
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to update consultation fee.'));
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
+
+  const handleLawyerPayoutSave = async (data: LawyerPayoutForm) => {
+    setIsProfileSaving(true);
+    try {
+      const updatedProfile = await api.updateMyLawyerProfile({
+        consultationFee: lawyerProfile?.consultationFee || 0,
+        paypalEmail: data.paypalEmail?.trim() || undefined,
+      });
+      setLawyerProfile(updatedProfile);
+      resetLawyerPayoutForm({
+        paypalEmail: updatedProfile.paypalEmail || '',
+      });
+      toast.success('PayPal payout account updated successfully.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update PayPal account.'));
     } finally {
       setIsProfileSaving(false);
     }
@@ -556,6 +595,26 @@ export default function ProfileSettingsPage() {
                       <p className="mt-1 text-sm text-red-500">{lawyerApplicationErrors.consultationFee.message}</p>
                     )}
                   </div>
+
+                  <div>
+                    <label className={labelClass}>PayPal Payout Email</label>
+                    <input
+                      {...registerLawyerApplication('paypalEmail', {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid PayPal email',
+                        },
+                      })}
+                      type="email"
+                      className={inputClass}
+                      placeholder="lawyer@paypalmail.com"
+                    />
+                    {lawyerApplicationErrors.paypalEmail && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {lawyerApplicationErrors.paypalEmail.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -656,6 +715,10 @@ export default function ProfileSettingsPage() {
                       <span><span className="text-[var(--text-muted)]">Experience: </span>{lawyerProfile.experienceYears} yrs</span>
                       <span><span className="text-[var(--text-muted)]">City: </span>{lawyerProfile.city}</span>
                       <span><span className="text-[var(--text-muted)]">Fee: </span>PKR {lawyerProfile.consultationFee.toLocaleString()}</span>
+                      <span className="sm:col-span-2">
+                        <span className="text-[var(--text-muted)]">PayPal payout: </span>
+                        {lawyerProfile.paypalEmail || 'Not added yet'}
+                      </span>
                     </div>
                   )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#f9f0e2] text-[#8a5f2c] border border-[#d5b47f]/30">
@@ -676,6 +739,12 @@ export default function ProfileSettingsPage() {
                   <p className="text-sm text-[var(--text-muted)] mt-0.5">
                     Your profile is live and visible to clients.
                   </p>
+                  {lawyerProfile && (
+                    <p className="mt-3 text-sm">
+                      <span className="text-[var(--text-muted)]">PayPal payout: </span>
+                      {lawyerProfile.paypalEmail || 'Not added yet'}
+                    </p>
+                  )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#e2f4ed] text-[#1f3d36] border border-[#46d3a1]/30">
                     <CheckCircle className="h-3 w-3" /> Approved
                   </span>
@@ -694,6 +763,12 @@ export default function ProfileSettingsPage() {
                   <p className="text-sm text-[var(--text-muted)] mt-0.5">
                     Your application was not approved. Please contact support for more information.
                   </p>
+                  {lawyerProfile && (
+                    <p className="mt-3 text-sm">
+                      <span className="text-[var(--text-muted)]">PayPal payout: </span>
+                      {lawyerProfile.paypalEmail || 'Not added yet'}
+                    </p>
+                  )}
                   <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#fde8ed] text-[#a23a4c] border border-[#ff8c8c]/30">
                     <XCircle className="h-3 w-3" /> Rejected
                   </span>
@@ -755,6 +830,59 @@ export default function ProfileSettingsPage() {
                       className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isProfileSaving ? 'Saving…' : 'Save Fee'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {isLawyer && lawyerProfile && (
+              <div className="space-y-4 pt-2 border-t border-white/10">
+                <div>
+                  <p className="font-semibold">PayPal Payout Account</p>
+                  <p className="text-sm text-[var(--text-muted)] mt-0.5">
+                    Add or update the PayPal email where Lawvera sends your case payouts.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
+                  <p className="text-[var(--text-muted)]">Current payout account</p>
+                  <p className="mt-1 font-medium text-[var(--text-primary)]">
+                    {lawyerProfile.paypalEmail || 'No PayPal account added yet'}
+                  </p>
+                </div>
+
+                <form
+                  onSubmit={handleLawyerPayoutSubmit(handleLawyerPayoutSave)}
+                  className="grid gap-4 md:grid-cols-[minmax(0,24rem)_auto] md:items-end"
+                >
+                  <div>
+                    <label className={labelClass}>PayPal Email</label>
+                    <input
+                      {...registerLawyerPayout('paypalEmail', {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid PayPal email',
+                        },
+                      })}
+                      type="email"
+                      className={inputClass}
+                      placeholder="lawyer@paypalmail.com"
+                    />
+                    {lawyerPayoutErrors.paypalEmail && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {lawyerPayoutErrors.paypalEmail.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-start md:justify-end">
+                    <button
+                      type="submit"
+                      disabled={isProfileSaving}
+                      className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isProfileSaving ? 'Saving…' : 'Save PayPal Account'}
                     </button>
                   </div>
                 </form>

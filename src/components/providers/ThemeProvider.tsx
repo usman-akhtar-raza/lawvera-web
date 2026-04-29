@@ -21,7 +21,7 @@ const STORAGE_KEY = 'lawvera-theme';
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const getInitialTheme = (): ThemeMode => {
+const getPreferredTheme = (): ThemeMode => {
   if (typeof window === 'undefined') {
     return 'light';
   }
@@ -37,7 +37,8 @@ const getInitialTheme = (): ThemeMode => {
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(() => getInitialTheme());
+  const [theme, setThemeState] = useState<ThemeMode>('light');
+  const [hasHydratedTheme, setHasHydratedTheme] = useState(false);
 
   const applyThemeClass = useCallback((value: ThemeMode) => {
     if (typeof document === 'undefined') return;
@@ -47,9 +48,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const nextTheme = getPreferredTheme();
+    setThemeState(nextTheme);
+    applyThemeClass(nextTheme);
+    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    setHasHydratedTheme(true);
+  }, [applyThemeClass]);
+
+  useEffect(() => {
+    if (!hasHydratedTheme || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
     applyThemeClass(theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme, applyThemeClass]);
+  }, [theme, hasHydratedTheme, applyThemeClass]);
 
   const updateTheme = useCallback((value: ThemeMode) => {
     setThemeState(value);

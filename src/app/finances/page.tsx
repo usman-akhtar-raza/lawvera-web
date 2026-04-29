@@ -28,6 +28,10 @@ const getStatusClass = (status: string) => {
     return 'border-[#46d3a1]/40 bg-[#e2f4ed] text-[#1f3d36]';
   }
 
+  if (status === 'refunded') {
+    return 'border-[#7dc4ff]/40 bg-[#e8f4ff] text-[#214b6b]';
+  }
+
   return 'border-white/10 bg-white/10 text-[var(--text-secondary)]';
 };
 
@@ -49,12 +53,20 @@ function FinanceRow({
             <Icon className="h-5 w-5 text-[#b07a43]" />
           </div>
           <div>
-            <p className="text-sm uppercase tracking-[0.14em] text-[var(--text-muted)]">
-              {label}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                {label}
+              </p>
+              <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                {transaction.sourceType === 'case' ? 'Case Escrow' : 'Consultation'}
+              </span>
+            </div>
             <h2 className="mt-1 text-xl font-semibold">
               {transaction.counterparty.name}
             </h2>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              {transaction.title}
+            </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--text-secondary)]">
               {transaction.counterparty.email && (
                 <span>{transaction.counterparty.email}</span>
@@ -99,10 +111,16 @@ function FinanceRow({
         </div>
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-[#d5b47f]" />
-          <span>
-            Appointment: {format(new Date(transaction.appointmentDate), 'MMM d, yyyy')}{' '}
-            at {transaction.slotTime}
-          </span>
+          {transaction.sourceType === 'booking' && transaction.appointmentDate ? (
+            <span>
+              Appointment: {format(new Date(transaction.appointmentDate), 'MMM d, yyyy')}{' '}
+              {transaction.slotTime ? `at ${transaction.slotTime}` : ''}
+            </span>
+          ) : (
+            <span>
+              Escrow: {transaction.escrowStatus || transaction.caseStatus || 'recorded'}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -154,8 +172,8 @@ export default function FinancesPage() {
   const isLawyer = user?.role === UserRole.LAWYER;
   const title = isLawyer ? 'Finances' : 'Payment History';
   const subtitle = isLawyer
-    ? 'See clients who have paid you for consultations.'
-    : 'See lawyers you have paid for consultations.';
+    ? 'See consultation payments and PayPal case payouts released to you.'
+    : 'See consultation payments and PayPal case escrow payments you made.';
   const totalLabel = isLawyer ? 'Total Received' : 'Total Paid';
   const transactions = finances?.transactions || [];
 
@@ -164,7 +182,7 @@ export default function FinancesPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#b07a43]">
-            JazzCash
+            Payments
           </p>
           <h1 className="mt-2 text-3xl font-bold">{title}</h1>
           <p className="mt-2 text-[var(--text-secondary)]">{subtitle}</p>
@@ -223,8 +241,8 @@ export default function FinancesPage() {
                     No paid transactions yet
                   </h2>
                   <p className="mt-2 text-[var(--text-secondary)]">
-                    Successful JazzCash payments will appear here after the
-                    gateway confirms them.
+                    Successful JazzCash consultation payments and successful
+                    PayPal escrow transactions will appear here after they are confirmed.
                   </p>
                 </div>
               )}

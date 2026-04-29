@@ -159,7 +159,10 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-white/10 py-6 text-center text-xs text-[var(--text-muted)]">
-          <p>&copy; {new Date().getFullYear()} Lawvera. All rights reserved.</p>
+          <p>
+            &copy; <span suppressHydrationWarning>{new Date().getUTCFullYear()}</span> Lawvera.
+            All rights reserved.
+          </p>
         </div>
       </footer>
 

@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AuthHydrationProvider } from "@/components/providers/AuthHydrationProvider";
 
 export const metadata: Metadata = {
   title: "Lawvera - Find Your Legal Expert",
@@ -21,15 +22,17 @@ export default function RootLayout({
     <html lang="en">
       <body className="theme-light antialiased">
         <ThemeProvider>
-          <QueryProvider>
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <ChatWidget />
-            </div>
-            <Toaster />
-          </QueryProvider>
+          <AuthHydrationProvider>
+            <QueryProvider>
+              <div className="min-h-screen flex flex-col">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+                <ChatWidget />
+              </div>
+              <Toaster />
+            </QueryProvider>
+          </AuthHydrationProvider>
         </ThemeProvider>
       </body>
     </html>
