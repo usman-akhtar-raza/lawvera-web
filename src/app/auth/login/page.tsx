@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,6 +10,12 @@ import { Briefcase } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { getPostLoginRedirect } from '@/lib/dashboard-route';
+import {
+  authErrorClass,
+  authInputClass,
+  authLabelClass,
+  authSubmitButtonClass,
+} from '@/lib/auth-form';
 
 interface LoginForm {
   email: string;
@@ -20,17 +25,15 @@ interface LoginForm {
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginForm>();
 
   const onSubmit = async (data: LoginForm) => {
-    setIsLoading(true);
     try {
-      const response = await api.login(data.email, data.password);
+      const response = await api.login(data.email.trim(), data.password);
 
       if ('requiresVerification' in response && response.requiresVerification) {
         toast('Please verify your email first.', { icon: '📧' });
@@ -53,8 +56,6 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Invalid email or password'));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -78,11 +79,11 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="brand-card p-5 sm:p-8">
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Email address
               </label>
@@ -95,12 +96,15 @@ export default function LoginPage() {
                       message: 'Invalid email address',
                     },
                   })}
+                  id="email"
                   type="email"
                   autoComplete="email"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  className={authInputClass}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="email-error" className={authErrorClass}>
                     {errors.email.message}
                   </p>
                 )}
@@ -111,7 +115,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-[var(--text-secondary)]"
+                  className={authLabelClass}
                 >
                   Password
                 </label>
@@ -131,11 +135,16 @@ export default function LoginPage() {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
+                  id="password"
                   autoComplete="current-password"
-                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={
+                    errors.password ? 'password-error' : undefined
+                  }
+                  inputClassName={authInputClass}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="password-error" className={authErrorClass}>
                     {errors.password.message}
                   </p>
                 )}
@@ -145,10 +154,11 @@ export default function LoginPage() {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className={authSubmitButtonClass}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>

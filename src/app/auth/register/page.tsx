@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -9,6 +8,15 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { AuthRoleTabs } from '@/components/auth/AuthRoleTabs';
+import { getPostLoginRedirect } from '@/lib/dashboard-route';
+import {
+  authErrorClass,
+  authInputClass,
+  authLabelClass,
+  authSubmitButtonClass,
+  phonePattern,
+} from '@/lib/auth-form';
 
 interface RegisterForm {
   name: string;
@@ -22,30 +30,22 @@ interface RegisterForm {
 export default function RegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors },
+    getValues,
+    formState: { errors, isSubmitting },
   } = useForm<RegisterForm>();
 
-  const password = watch('password');
-
   const onSubmit = async (data: RegisterForm) => {
-    if (data.password !== data.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    setIsLoading(true);
     try {
+      const { confirmPassword: _confirmPassword, ...formValues } = data;
       const registerData = {
-        name: data.name,
-        email: data.email,
+        name: formValues.name.trim(),
+        email: formValues.email.trim(),
         password: data.password,
-        city: data.city,
-        phone: data.phone,
+        city: formValues.city?.trim() || undefined,
+        phone: formValues.phone?.trim() || undefined,
       };
       const response = await api.registerClient(registerData);
 
@@ -56,16 +56,20 @@ export default function RegisterPage() {
       }
 
       if ('tokens' in response) {
-        setAuth(response.user, response.tokens);
+        setAuth(response.user, response.tokens, response.lawyerProfile);
         toast.success('Registration successful!');
-        router.push('/dashboard/client');
+        const requestedRedirect =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('redirect')
+            : null;
+        router.push(
+          getPostLoginRedirect(response.user.role, requestedRedirect),
+        );
       }
     } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Registration failed. Please try again.'),
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -87,37 +91,28 @@ export default function RegisterPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="brand-card p-5 sm:p-8">
-          <div className="mb-6 flex gap-2">
-            <Link
-              href="/auth/register"
-              className="auth-tab-selected flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] border-transparent"
-            >
-              User
-            </Link>
-            <Link
-              href="/auth/register/lawyer"
-              className="flex-1 text-center py-2 rounded-lg border bg-white/5 text-[var(--text-secondary)] border-white/10"
-            >
-              Lawyer
-            </Link>
-          </div>
+          <AuthRoleTabs activeRole="client" />
 
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Full Name
               </label>
               <div className="mt-1">
                 <input
                   {...register('name', { required: 'Name is required' })}
+                  id="name"
                   type="text"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  autoComplete="name"
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                  className={authInputClass}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="name-error" className={authErrorClass}>
                     {errors.name.message}
                   </p>
                 )}
@@ -127,7 +122,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Email address
               </label>
@@ -140,12 +135,15 @@ export default function RegisterPage() {
                       message: 'Invalid email address',
                     },
                   })}
+                  id="email"
                   type="email"
                   autoComplete="email"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  className={authInputClass}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="email-error" className={authErrorClass}>
                     {errors.email.message}
                   </p>
                 )}
@@ -155,7 +153,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Password
               </label>
@@ -168,11 +166,16 @@ export default function RegisterPage() {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
+                  id="password"
                   autoComplete="new-password"
-                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={
+                    errors.password ? 'password-error' : undefined
+                  }
+                  inputClassName={authInputClass}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="password-error" className={authErrorClass}>
                     {errors.password.message}
                   </p>
                 )}
@@ -182,7 +185,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Confirm Password
               </label>
@@ -191,13 +194,19 @@ export default function RegisterPage() {
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
                     validate: (value) =>
-                      value === password || 'Passwords do not match',
+                      value === getValues('password') ||
+                      'Passwords do not match',
                   })}
+                  id="confirmPassword"
                   autoComplete="new-password"
-                  inputClassName="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={
+                    errors.confirmPassword ? 'confirm-password-error' : undefined
+                  }
+                  inputClassName={authInputClass}
                 />
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="confirm-password-error" className={authErrorClass}>
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -207,15 +216,17 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="city"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 City (Optional)
               </label>
               <div className="mt-1">
                 <input
                   {...register('city')}
+                  id="city"
                   type="text"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  autoComplete="address-level2"
+                  className={authInputClass}
                 />
               </div>
             </div>
@@ -223,26 +234,41 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-[var(--text-secondary)]"
+                className={authLabelClass}
               >
                 Phone (Optional)
               </label>
               <div className="mt-1">
                 <input
-                  {...register('phone')}
+                  {...register('phone', {
+                    pattern: {
+                      value: phonePattern,
+                      message: 'Enter a valid phone number',
+                    },
+                  })}
+                  id="phone"
                   type="tel"
-                  className="appearance-none block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f] sm:text-sm"
+                  autoComplete="tel"
+                  aria-invalid={Boolean(errors.phone)}
+                  aria-describedby={errors.phone ? 'phone-error' : undefined}
+                  className={authInputClass}
                 />
+                {errors.phone && (
+                  <p id="phone-error" className={authErrorClass}>
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
-                className="auth-submit-button w-full flex justify-center py-2 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className={authSubmitButtonClass}
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
+                {isSubmitting ? 'Creating account...' : 'Create account'}
               </button>
             </div>
           </form>
