@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -9,6 +9,21 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { AuthRoleTabs } from '@/components/auth/AuthRoleTabs';
+import { getPostLoginRedirect } from '@/lib/dashboard-route';
+import {
+  authErrorClass,
+  authInputClass,
+  authLabelClass,
+  authSubmitButtonClass,
+} from '@/lib/auth-form';
+import {
+  createEmptyAvailability,
+  getFilledAvailability,
+  LAWYER_AVAILABILITY_DAYS,
+  LAWYER_TIME_SLOTS,
+  type AvailabilitySelection,
+} from '@/lib/lawyer-availability';
 
 interface LawyerRegisterForm {
   name: string;
@@ -22,129 +37,127 @@ interface LawyerRegisterForm {
   paypalEmail?: string;
   education?: string;
   description?: string;
-  profilePhotoUrl?: string;
+  availabilitySelection?: string;
 }
 
-const DAYS = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
+const DEFAULT_SPECIALIZATIONS = [
+  { _id: 'default-criminal', name: 'Criminal Law' },
+  { _id: 'default-family', name: 'Family Law' },
+  { _id: 'default-property', name: 'Property Law' },
+  { _id: 'default-corporate', name: 'Corporate Law' },
+  { _id: 'default-immigration', name: 'Immigration Law' },
+  { _id: 'default-tax', name: 'Tax Law' },
 ];
-
-const TIME_SLOTS = [
-  '9:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '1:00 PM',
-  '2:00 PM',
-  '3:00 PM',
-  '4:00 PM',
-  '5:00 PM',
-];
-
-const getFilledAvailability = (
-  availability: Array<{ day: string; slots: string[] }>,
-) => availability.filter((item) => item.slots.length > 0);
 
 export default function LawyerRegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSpecializationsLoading, setIsSpecializationsLoading] =
+    useState(true);
   const [specializations, setSpecializations] = useState<
     Array<{ _id: string; name: string }>
   >([]);
-  const [availability, setAvailability] = useState<
-    Array<{ day: string; slots: string[] }>
-  >(
-    DAYS.map((day) => ({
-      day,
-      slots: [],
-    })),
-  );
+  const [availability, setAvailability] =
+    useState<AvailabilitySelection[]>(createEmptyAvailability());
 
   useEffect(() => {
-    // api
-    //   .getSpecializations()
-    //   .then(setSpecializations)
-    //   .catch(() => {
-        // If specializations don't exist, use defaults
-        setSpecializations([
-          { _id: '1', name: 'Criminal Law' },
-          { _id: '2', name: 'Family Law' },
-          { _id: '3', name: 'Property Law' },
-          { _id: '4', name: 'Corporate Law' },
-          { _id: '5', name: 'Immigration Law' },
-          { _id: '6', name: 'Tax Law' },
-        ]);
-      // });
+    let isMounted = true;
+
+    void api
+      .getSpecializations()
+      .then((results) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setSpecializations(
+          results.length > 0 ? results : DEFAULT_SPECIALIZATIONS,
+        );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setSpecializations(DEFAULT_SPECIALIZATIONS);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsSpecializationsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors },
+    getValues,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
   } = useForm<LawyerRegisterForm>();
 
-  const password = watch('password');
-  const inputClass =
-    'mt-1 block w-full px-3 py-2 rounded-lg bg-[var(--surface-elevated)] border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d5b47f]';
-  const labelClass = 'block text-sm font-medium text-[var(--text-secondary)]';
-
   const toggleSlot = (day: string, slot: string) => {
-    setAvailability((prev) =>
-      prev.map((item) => {
-        if (item.day === day) {
-          const slots = item.slots.includes(slot)
-            ? item.slots.filter((s) => s !== slot)
-            : [...item.slots, slot];
-          return { ...item, slots };
+    setAvailability((prev) => {
+      const nextAvailability = prev.map((item) => {
+        if (item.day !== day) {
+          return item;
         }
-        return item;
-      }),
-    );
+
+        const slots = item.slots.includes(slot)
+          ? item.slots.filter((currentSlot) => currentSlot !== slot)
+          : [...item.slots, slot];
+
+        return { ...item, slots };
+      });
+
+      if (getFilledAvailability(nextAvailability).length > 0) {
+        clearErrors('availabilitySelection');
+      }
+
+      return nextAvailability;
+    });
   };
 
   const onSubmit = async (data: LawyerRegisterForm) => {
-    if (data.password !== data.confirmPassword) {
-      toast.error('Passwords do not match');
+    const selectedAvailability = getFilledAvailability(availability);
+    if (selectedAvailability.length === 0) {
+      setError('availabilitySelection', {
+        type: 'manual',
+        message: 'Select at least one availability slot in the week',
+      });
       return;
     }
 
-    const filledAvailability = getFilledAvailability(availability);
-    if (filledAvailability.length === 0) {
-      toast.error('Select at least one availability slot in the week');
-      return;
-    }
+    clearErrors('availabilitySelection');
 
-    setIsLoading(true);
     try {
-      const registerData = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        specialization: data.specialization,
-        experienceYears: data.experienceYears,
-        city: data.city,
-        consultationFee: data.consultationFee,
-        paypalEmail: data.paypalEmail?.trim() || undefined,
-        education: data.education,
-        description: data.description,
-        profilePhotoUrl: data.profilePhotoUrl,
-      };
+      const {
+        confirmPassword: _confirmPassword,
+        availabilitySelection: _availabilitySelection,
+        ...formValues
+      } = data;
       const response = await api.registerLawyer({
-        ...registerData,
-        availability: filledAvailability,
+        name: formValues.name.trim(),
+        email: formValues.email.trim(),
+        password: formValues.password,
+        specialization: formValues.specialization,
+        experienceYears: Number(formValues.experienceYears),
+        city: formValues.city.trim(),
+        consultationFee: Number(formValues.consultationFee),
+        paypalEmail: formValues.paypalEmail?.trim() || undefined,
+        education: formValues.education?.trim() || undefined,
+        description: formValues.description?.trim() || undefined,
+        availability: selectedAvailability,
       });
 
       if ('requiresVerification' in response && response.requiresVerification) {
         toast.success('Registration successful! Please verify your email.');
-        router.push(`/auth/verify-otp?email=${encodeURIComponent(response.email)}`);
+        router.push(
+          `/auth/verify-otp?email=${encodeURIComponent(response.email)}`,
+        );
         return;
       }
 
@@ -153,22 +166,25 @@ export default function LawyerRegisterPage() {
         toast.success(
           'Registration successful! Your profile is pending approval.',
         );
-        router.push('/dashboard/lawyer');
+        const requestedRedirect =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('redirect')
+            : null;
+        router.push(
+          getPostLoginRedirect(response.user.role, requestedRedirect),
+        );
       }
     } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Registration failed. Please try again.'),
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-muted)] py-10 px-4 sm:py-12 sm:px-6 lg:px-8 text-[var(--text-primary)]">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          
+    <div className="min-h-screen bg-[var(--background-muted)] px-4 py-10 text-[var(--text-primary)] sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 text-center">
           <h2 className="text-3xl font-extrabold">Register as a Lawyer</h2>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
             Already have an account?{' '}
@@ -182,40 +198,40 @@ export default function LawyerRegisterPage() {
         </div>
 
         <div className="brand-card p-5 sm:p-8">
-          <div className="mb-6 flex gap-2">
-            <Link
-              href="/auth/register"
-              className="flex-1 text-center py-2 rounded-lg border bg-white/5 text-[var(--text-secondary)] border-white/10"
-            >
-              User
-            </Link>
-            <Link
-              href="/auth/register/lawyer"
-              className="auth-tab-selected flex-1 text-center py-2 rounded-lg border bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] border-transparent"
-            >
-              Lawyer
-            </Link>
-          </div>
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <AuthRoleTabs activeRole="lawyer" />
+
+          <form
+            className="space-y-6"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+          >
+            <p className="text-sm text-[var(--text-muted)]">
+              Fields marked with * are required.
+            </p>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className={labelClass}>
+                <label htmlFor="name" className={authLabelClass}>
                   Full Name *
                 </label>
                 <input
                   {...register('name', { required: 'Name is required' })}
+                  id="name"
                   type="text"
-                  className={inputClass}
+                  autoComplete="name"
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? 'lawyer-name-error' : undefined}
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-name-error" className={authErrorClass}>
                     {errors.name.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="email" className={authLabelClass}>
                   Email *
                 </label>
                 <input
@@ -226,18 +242,24 @@ export default function LawyerRegisterPage() {
                       message: 'Invalid email',
                     },
                   })}
+                  id="email"
                   type="email"
-                  className={inputClass}
+                  autoComplete="email"
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={
+                    errors.email ? 'lawyer-email-error' : undefined
+                  }
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-email-error" className={authErrorClass}>
                     {errors.email.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="paypalEmail" className={authLabelClass}>
                   PayPal Payout Email
                 </label>
                 <input
@@ -247,18 +269,24 @@ export default function LawyerRegisterPage() {
                       message: 'Invalid PayPal email',
                     },
                   })}
+                  id="paypalEmail"
                   type="email"
-                  className={inputClass}
+                  autoComplete="email"
+                  aria-invalid={Boolean(errors.paypalEmail)}
+                  aria-describedby={
+                    errors.paypalEmail ? 'lawyer-paypal-email-error' : undefined
+                  }
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.paypalEmail && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-paypal-email-error" className={authErrorClass}>
                     {errors.paypalEmail.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="password" className={authLabelClass}>
                   Password *
                 </label>
                 <PasswordField
@@ -269,62 +297,95 @@ export default function LawyerRegisterPage() {
                       message: 'Min 6 characters',
                     },
                   })}
+                  id="password"
                   autoComplete="new-password"
-                  inputClassName={inputClass}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={
+                    errors.password ? 'lawyer-password-error' : undefined
+                  }
+                  inputClassName={`mt-1 ${authInputClass}`}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-password-error" className={authErrorClass}>
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="confirmPassword" className={authLabelClass}>
                   Confirm Password *
                 </label>
                 <PasswordField
                   {...register('confirmPassword', {
                     required: 'Please confirm password',
                     validate: (value) =>
-                      value === password || 'Passwords do not match',
+                      value === getValues('password') ||
+                      'Passwords do not match',
                   })}
+                  id="confirmPassword"
                   autoComplete="new-password"
-                  inputClassName={inputClass}
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={
+                    errors.confirmPassword
+                      ? 'lawyer-confirm-password-error'
+                      : undefined
+                  }
+                  inputClassName={`mt-1 ${authInputClass}`}
                 />
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="lawyer-confirm-password-error"
+                    className={authErrorClass}
+                  >
                     {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="specialization" className={authLabelClass}>
                   Specialization *
                 </label>
                 <select
                   {...register('specialization', {
                     required: 'Specialization is required',
                   })}
-                  className={inputClass}
+                  id="specialization"
+                  disabled={
+                    isSpecializationsLoading && specializations.length === 0
+                  }
+                  aria-invalid={Boolean(errors.specialization)}
+                  aria-describedby={
+                    errors.specialization
+                      ? 'lawyer-specialization-error'
+                      : undefined
+                  }
+                  className={`mt-1 ${authInputClass}`}
                 >
-                  <option value="">Select specialization</option>
+                  <option value="">
+                    {isSpecializationsLoading
+                      ? 'Loading specializations...'
+                      : 'Select specialization'}
+                  </option>
                   {specializations.map((spec) => (
-                    <option key={spec._id} value={spec.name} >
+                    <option key={spec._id} value={spec.name}>
                       {spec.name}
                     </option>
                   ))}
                 </select>
                 {errors.specialization && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="lawyer-specialization-error"
+                    className={authErrorClass}
+                  >
                     {errors.specialization.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="experienceYears" className={authLabelClass}>
                   Experience (Years) *
                 </label>
                 <input
@@ -332,48 +393,80 @@ export default function LawyerRegisterPage() {
                     required: 'Experience is required',
                     valueAsNumber: true,
                     min: { value: 0, message: 'Must be 0 or more' },
+                    max: { value: 80, message: 'Use a realistic value' },
+                    validate: (value) =>
+                      Number.isInteger(value) || 'Enter whole years only',
                   })}
+                  id="experienceYears"
                   type="number"
-                  className={inputClass}
+                  step="1"
+                  inputMode="numeric"
+                  aria-invalid={Boolean(errors.experienceYears)}
+                  aria-describedby={
+                    errors.experienceYears
+                      ? 'lawyer-experience-error'
+                      : undefined
+                  }
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.experienceYears && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-experience-error" className={authErrorClass}>
                     {errors.experienceYears.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
+                <label htmlFor="city" className={authLabelClass}>
                   City *
                 </label>
                 <input
                   {...register('city', { required: 'City is required' })}
+                  id="city"
                   type="text"
-                  className={inputClass}
+                  autoComplete="address-level2"
+                  aria-invalid={Boolean(errors.city)}
+                  aria-describedby={errors.city ? 'lawyer-city-error' : undefined}
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.city && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p id="lawyer-city-error" className={authErrorClass}>
                     {errors.city.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>
-                  Consultation Fee ($) *
+                <label htmlFor="consultationFee" className={authLabelClass}>
+                  Consultation Fee (PKR) *
                 </label>
                 <input
                   {...register('consultationFee', {
                     required: 'Fee is required',
                     valueAsNumber: true,
                     min: { value: 0, message: 'Must be 0 or more' },
+                    max: {
+                      value: 1_000_000,
+                      message: 'Fee is above the allowed limit',
+                    },
                   })}
+                  id="consultationFee"
                   type="number"
-                  className={inputClass}
+                  step="0.01"
+                  inputMode="decimal"
+                  aria-invalid={Boolean(errors.consultationFee)}
+                  aria-describedby={
+                    errors.consultationFee
+                      ? 'lawyer-consultation-fee-error'
+                      : undefined
+                  }
+                  className={`mt-1 ${authInputClass}`}
                 />
                 {errors.consultationFee && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="lawyer-consultation-fee-error"
+                    className={authErrorClass}
+                  >
                     {errors.consultationFee.message}
                   </p>
                 )}
@@ -381,55 +474,70 @@ export default function LawyerRegisterPage() {
             </div>
 
             <div>
-              <label className={labelClass}>
+              <label htmlFor="education" className={authLabelClass}>
                 Education
               </label>
               <textarea
                 {...register('education')}
+                id="education"
                 rows={2}
-                className={inputClass}
+                className={`mt-1 ${authInputClass}`}
                 placeholder="e.g., LLB from Harvard Law School"
               />
             </div>
 
             <div>
-              <label className={labelClass}>
+              <label htmlFor="description" className={authLabelClass}>
                 Description / About
               </label>
               <textarea
                 {...register('description')}
+                id="description"
                 rows={4}
-                className={inputClass}
+                className={`mt-1 ${authInputClass}`}
                 placeholder="Tell clients about your practice and expertise..."
               />
             </div>
 
             <div>
-              <label className={`${labelClass} mb-4`}>
+              <label
+                htmlFor="availability-selection"
+                className={`${authLabelClass} mb-4`}
+              >
                 Availability *
               </label>
               <p className="mb-4 text-sm text-[var(--text-muted)]">
                 Select at least one slot in the week. You do not need to pick a
                 slot for every day.
               </p>
+              <input id="availability-selection" type="hidden" />
               <div className="lawyer-timetable space-y-4">
-                {DAYS.map((day) => {
-                  const daySchedule = availability.find((a) => a.day === day);
+                {LAWYER_AVAILABILITY_DAYS.map((day) => {
+                  const daySchedule = availability.find((item) => item.day === day);
+
                   return (
-                    <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
-                      <h4 className="font-medium mb-2 text-[var(--text-primary)]">{day}</h4>
-                      <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
-                        {TIME_SLOTS.map((slot) => {
+                    <div
+                      key={day}
+                      className="rounded-lg border border-white/10 bg-white/5 p-4"
+                    >
+                      <h4 className="mb-2 font-medium text-[var(--text-primary)]">
+                        {day}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3 sm:grid-cols-5">
+                        {LAWYER_TIME_SLOTS.map((slot) => {
                           const isSelected = daySchedule?.slots.includes(slot);
+
                           return (
                             <button
                               key={slot}
                               type="button"
                               onClick={() => toggleSlot(day, slot)}
-                              className={`px-3 py-2 rounded text-sm border transition-colors ${
+                              aria-pressed={Boolean(isSelected)}
+                              aria-label={`${day} ${slot}`}
+                              className={`rounded border px-3 py-2 text-sm transition-colors ${
                                 isSelected
                                   ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
-                                  : 'bg-white/5 text-[var(--text-secondary)] border-white/10 hover:border-[#d5b47f]/40'
+                                  : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] border-white/10 hover:border-[#d5b47f]/40'
                               }`}
                             >
                               {slot}
@@ -441,15 +549,21 @@ export default function LawyerRegisterPage() {
                   );
                 })}
               </div>
+              {errors.availabilitySelection && (
+                <p id="availability-selection-error" className={authErrorClass}>
+                  {errors.availabilitySelection.message}
+                </p>
+              )}
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
-                className="auth-submit-button w-full flex justify-center py-3 px-4 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] hover:shadow-lg hover:shadow-[#d5b47f]/40 disabled:opacity-50"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className={`${authSubmitButtonClass} py-3`}
               >
-                {isLoading ? 'Registering...' : 'Register as Lawyer'}
+                {isSubmitting ? 'Registering...' : 'Register as Lawyer'}
               </button>
             </div>
           </form>

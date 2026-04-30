@@ -136,7 +136,7 @@ export function BookingModal({
                       isSelected
                         ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
                         : hasSlots && !isPast
-                          ? 'border-white/10 bg-white text-[var(--text-primary)] hover:border-[#d5b47f]/40'
+                          ? 'border-white/10 bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[#d5b47f]/40'
                           : 'border-white/10 bg-[var(--surface-muted)] text-[var(--text-muted)] cursor-not-allowed'
                     }`}
                   >
@@ -162,7 +162,7 @@ export function BookingModal({
                     className={`p-3 rounded-lg border text-sm transition-colors ${
                       selectedTime === slot
                         ? 'bg-gradient-to-r from-[#f3e2c1] to-[#d5b47f] text-[#1b1205] border-transparent'
-                        : 'border-white/10 bg-white text-[var(--text-primary)] hover:border-[#d5b47f]/40'
+                        : 'border-white/10 bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[#d5b47f]/40'
                     }`}
                   >
                     {slot}

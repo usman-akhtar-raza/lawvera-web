@@ -12,6 +12,13 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/error-message';
 import type { AuthResponse, ProfileSwitchStatus } from '@/types';
 import { isAdminRole } from '@/lib/role-utils';
+import {
+  createEmptyAvailability,
+  getFilledAvailability,
+  LAWYER_AVAILABILITY_DAYS,
+  LAWYER_TIME_SLOTS,
+  normalizeAvailability,
+} from '@/lib/lawyer-availability';
 
 const themeOptions = [
   {
@@ -28,30 +35,10 @@ const themeOptions = [
   },
 ];
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const TIME_SLOTS = [
-  '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-  '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
-];
 const SPECIALIZATIONS = [
   'Criminal Law', 'Family Law', 'Property Law',
   'Corporate Law', 'Immigration Law', 'Tax Law',
 ];
-
-const createEmptyAvailability = () =>
-  DAYS.map((day) => ({ day, slots: [] as string[] }));
-
-const normalizeAvailability = (
-  source: Array<{ day: string; slots: string[] }> = [],
-) =>
-  DAYS.map((day) => ({
-    day,
-    slots: source.find((item) => item.day === day)?.slots ?? [],
-  }));
-
-const getFilledAvailability = (
-  availability: Array<{ day: string; slots: string[] }>,
-) => availability.filter((item) => item.slots.length > 0);
 
 interface LawyerApplyForm {
   specialization: string;
@@ -645,13 +632,13 @@ export default function ProfileSettingsPage() {
                     </span>
                   </p>
                   <div className="lawyer-timetable space-y-3">
-                    {DAYS.map((day) => {
+                    {LAWYER_AVAILABILITY_DAYS.map((day) => {
                       const daySchedule = availability.find((a) => a.day === day);
                       return (
                         <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
                           <h4 className="font-medium mb-2 text-sm">{day}</h4>
                           <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
-                            {TIME_SLOTS.map((slot) => {
+                            {LAWYER_TIME_SLOTS.map((slot) => {
                               const isSelected = daySchedule?.slots.includes(slot);
                               return (
                                 <button
@@ -907,13 +894,13 @@ export default function ProfileSettingsPage() {
                 </div>
 
                 <div className="lawyer-timetable space-y-3">
-                  {DAYS.map((day) => {
+                  {LAWYER_AVAILABILITY_DAYS.map((day) => {
                     const daySchedule = availability.find((item) => item.day === day);
                     return (
                       <div key={day} className="border border-white/10 rounded-lg p-4 bg-white/5">
                         <h4 className="font-medium mb-2 text-sm">{day}</h4>
                         <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
-                          {TIME_SLOTS.map((slot) => {
+                          {LAWYER_TIME_SLOTS.map((slot) => {
                             const isSelected = daySchedule?.slots.includes(slot);
                             return (
                               <button
